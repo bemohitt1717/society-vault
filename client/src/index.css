@@ -1,0 +1,35 @@
+@import "tailwindcss";
+@import "@heroui/styles"; 
+
+
+:root {
+  --color-bg: #16161a;
+  --color-accent: #7f5af0;
+  --color-text: #fffffe;
+  --color-muted: #94a1b2;
+  --color-secondary: #72757e;
+  --color-tertiary: #2cb67d;
+  --color-surface: #242629;
+  --color-border: #2e2f33;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #242629 inset !important;
+  -webkit-text-fill-color: #fffffe !important;
+  caret-color: #fffffe;
+}
