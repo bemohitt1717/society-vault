@@ -1,12 +1,18 @@
-import api from './http';
+import api, { clearAuthToken, setAuthToken } from './http';
 
-export const registerResident = async (credentials) => (await api.post('/auth/register', credentials)).data.data;
-export const login = async (credentials) => (await api.post('/auth/login', credentials)).data.data;
-export const loginWithGoogle = async (idToken) => (await api.post('/auth/google', { idToken })).data.data;
+const saveSession = ({ data }) => {
+  const { token, user } = data.data;
+  setAuthToken(token);
+  return user;
+};
+
+export const registerResident = async (credentials) => saveSession(await api.post('/auth/register', credentials));
+export const login = async (credentials) => saveSession(await api.post('/auth/login', credentials));
+export const loginWithGoogle = async (idToken) => saveSession(await api.post('/auth/google', { idToken }));
 export const getCurrentUser = async () => (await api.get('/auth/me')).data.data;
 export const updateResidentProfile = async (profile, password) => (
   await api.put('/auth/profile', { profile, ...(password ? { password } : {}) })
 ).data.data;
 export const updateAccountProfile = async (name) => (await api.put('/auth/profile', { name })).data.data;
 export const requestPasswordReset = async (email) => (await api.post('/auth/password-reset', { email })).data.data;
-export const logout = async () => (await api.post('/auth/logout')).data.data;
+export const clearSession = () => clearAuthToken();

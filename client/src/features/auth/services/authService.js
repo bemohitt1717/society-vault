@@ -4,7 +4,7 @@ import {
   getCurrentUser as getCurrentUserRequest,
   login as loginRequest,
   loginWithGoogle,
-  logout as logoutRequest,
+  clearSession,
   requestPasswordReset,
   registerResident,
   updateAccountProfile,
@@ -22,7 +22,7 @@ export const registerUser = async (email, password, role = 'resident') => {
 export const loginUser = async (email, password, role) => {
   const user = await loginRequest({ email, password });
   if (role && user.role !== role) {
-    await logoutRequest();
+    clearSession();
     throw new Error(`This account is registered as ${user.role === 'admin' ? 'Administrator' : 'Resident'}.`);
   }
   return user;
@@ -46,7 +46,7 @@ export const getCurrentUser = async () => {
 
 export const logoutUser = async () => {
   try {
-    await logoutRequest();
+    clearSession();
   } finally {
     await signOut(auth);
   }

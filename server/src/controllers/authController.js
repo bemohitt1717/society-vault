@@ -12,49 +12,32 @@ import asyncHandler from '../utils/asyncHandler.js';
 import { sendData } from '../utils/response.js';
 import ApiError from '../utils/ApiError.js';
 
-const COOKIE_NAME = 'societyvault_session';
-const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
-
-const cookieOptions = () => ({
-  httpOnly: true,
-  secure: env.NODE_ENV === 'production',
-  sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
-  path: '/api/v1',
-  maxAge: COOKIE_MAX_AGE,
-});
-
-const startSession = (res, user) => {
+const startSession = (user) => {
   const token = jwt.sign(
     { role: user.role },
     env.JWT_SECRET,
     { subject: user.id, expiresIn: env.JWT_EXPIRES_IN, issuer: 'societyvault-api' },
   );
-  res.cookie(COOKIE_NAME, token, cookieOptions());
-  return toPublicUser(user);
+  return { token, user: toPublicUser(user) };
 };
 
 export const register = asyncHandler(async (req, res) => {
   const user = await registerResident(req.validated.body);
-  return sendData(res, startSession(res, user), 201);
+  return sendData(res, startSession(user), 201);
 });
 
 export const login = asyncHandler(async (req, res) => {
   const user = await authenticateWithPassword(req.validated.body);
-  return sendData(res, startSession(res, user));
+  return sendData(res, startSession(user));
 });
 
 export const googleLogin = asyncHandler(async (req, res) => {
   const user = await authenticateWithFirebase(req.validated.body.idToken);
-  return sendData(res, startSession(res, user));
+  return sendData(res, startSession(user));
 });
 
 export const requestPasswordReset = (_req, _res, next) => {
   next(new ApiError(503, 'Password reset is unavailable until an email delivery provider is configured.'));
-};
-
-export const logout = (_req, res) => {
-  res.clearCookie(COOKIE_NAME, { ...cookieOptions(), maxAge: undefined });
-  return sendData(res, { signedOut: true });
 };
 
 export const currentUser = asyncHandler(async (req, res) => sendData(res, toPublicUser(req.user)));

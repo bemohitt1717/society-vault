@@ -24,7 +24,6 @@ router.post('/register', loginLimiter, validate(registerSchema), authController.
 router.post('/login', loginLimiter, validate(loginSchema), authController.login);
 router.post('/google', loginLimiter, validate(googleLoginSchema), authController.googleLogin);
 router.post('/password-reset', loginLimiter, validate(passwordResetSchema), authController.requestPasswordReset);
-router.post('/logout', authenticate, authController.logout);
 router.get('/me', authenticate, authController.currentUser);
 router.put('/profile', authenticate, validate(accountProfileSchema), authController.updateProfile);
 
