@@ -79,6 +79,10 @@ export const authenticateWithFirebase = async (idToken) => {
     decoded = await getFirebaseAuth().verifyIdToken(idToken, true);
   } catch (error) {
     if (error instanceof ApiError) throw error;
+    console.error('[Auth] Firebase ID token verification failed:', {
+      code: error?.code,
+      message: error?.message,
+    });
     throw new ApiError(401, 'Google sign-in could not be verified. Please sign in again.');
   }
 
