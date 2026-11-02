@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useOutletContext } from 'react-router-dom';
-import { expenseStats, expenseTransactions } from '../data/mockExpenseData';
+import { createExpense, deleteExpense, getSettings, listExpenses, updateExpense } from '../../../../services/api/adminApi';
+import { getApiErrorMessage } from '../../../../services/api/http';
 
 const initialFilters = {
   search: '',
@@ -11,42 +12,8 @@ const initialFilters = {
   status: '',
 };
 
-const filterExpenseTransactions = (transactions, filters) => {
-  let filtered = [...transactions];
-
-  if (filters.search.trim()) {
-    const search = filters.search.toLowerCase();
-    filtered = filtered.filter((transaction) =>
-      transaction.description?.toLowerCase().includes(search)
-      || transaction.id?.toLowerCase().includes(search)
-      || transaction.vendor?.toLowerCase().includes(search)
-      || transaction.category?.toLowerCase().includes(search));
-  }
-  if (filters.dateFrom) {
-    filtered = filtered.filter((transaction) => new Date(transaction.date) >= new Date(filters.dateFrom));
-  }
-  if (filters.dateTo) {
-    filtered = filtered.filter((transaction) => new Date(transaction.date) <= new Date(filters.dateTo));
-  }
-  if (filters.category) {
-    filtered = filtered.filter((transaction) => transaction.category === filters.category);
-  }
-  if (filters.vendor.trim()) {
-    const vendor = filters.vendor.toLowerCase();
-    filtered = filtered.filter((transaction) => transaction.vendor?.toLowerCase().includes(vendor));
-  }
-  if (filters.status) {
-    filtered = filtered.filter((transaction) => transaction.paymentStatus === filters.status);
-  }
-
-  return filtered;
-};
-
-const calculateExpenseStats = (transactions, currentStats) => ({
-  totalExpenses: transactions.reduce((sum, transaction) => sum + transaction.amount, 0),
-  transactionCount: transactions.length,
-  topCategory: currentStats.topCategory,
-});
+const emptyStats = { totalExpenses: 0, transactionCount: 0, topCategory: '' };
+const pageSize = 20;
 
 const useExpensePage = () => {
   const location = useLocation();
@@ -56,64 +23,149 @@ const useExpensePage = () => {
   const [showDetail, setShowDetail] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [viewingExpense, setViewingExpense] = useState(null);
-  const [transactions, setTransactions] = useState(expenseTransactions);
-  const [stats, setStats] = useState(expenseStats);
+  const [transactions, setTransactions] = useState([]);
+  const [stats, setStats] = useState(emptyStats);
+  const [categories, setCategories] = useState([]);
   const [filters, setFilters] = useState(initialFilters);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [settingsError, setSettingsError] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [reloadVersion, setReloadVersion] = useState(0);
+  const [settingsReloadVersion, setSettingsReloadVersion] = useState(0);
 
   const handleAddExpense = useCallback(() => {
+    setActionError('');
     setEditingExpense(null);
     setShowForm(true);
   }, []);
 
   const handleEditExpense = useCallback((expense) => {
+    setActionError('');
     setEditingExpense(expense);
     setShowForm(true);
   }, []);
 
   const handleViewExpense = useCallback((expense) => {
+    setActionError('');
     setViewingExpense(expense);
     setShowDetail(true);
   }, []);
 
   const handleCloseForm = useCallback(() => {
+    setActionError('');
     setShowForm(false);
     setEditingExpense(null);
   }, []);
 
   const handleCloseDetail = useCallback(() => {
+    setActionError('');
     setShowDetail(false);
     setViewingExpense(null);
   }, []);
 
-  const handleSaveExpense = useCallback((expenseData) => {
-    const updatedTransactions = editingExpense
-      ? transactions.map((transaction) => transaction.id === editingExpense.id
-        ? { ...transaction, ...expenseData, id: transaction.id }
-        : transaction)
-      : [{
-        ...expenseData,
-        id: `EXP-${String(transactions.length + 1).padStart(3, '0')}`,
-        hasInvoice: false,
-      }, ...transactions];
+  const handleSaveExpense = useCallback(async (expenseData) => {
+    setIsSaving(true);
+    setActionError('');
+    try {
+      if (editingExpense) {
+        await updateExpense(editingExpense.id, expenseData);
+      } else {
+        await createExpense(expenseData);
+      }
+      setPage(1);
+      setReloadVersion((version) => version + 1);
+      handleCloseForm();
+      return true;
+    } catch (error) {
+      setActionError(getApiErrorMessage(error));
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [editingExpense, handleCloseForm]);
 
-    setTransactions(updatedTransactions);
-    setStats((currentStats) => calculateExpenseStats(updatedTransactions, currentStats));
-    handleCloseForm();
-  }, [editingExpense, handleCloseForm, transactions]);
+  const handleDeleteExpense = useCallback(async (expenseId) => {
+    setIsDeleting(true);
+    setActionError('');
+    try {
+      await deleteExpense(expenseId);
+      handleCloseDetail();
+      setReloadVersion((version) => version + 1);
+      return true;
+    } catch (error) {
+      setActionError(getApiErrorMessage(error));
+      return false;
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [handleCloseDetail]);
 
-  const handleDeleteExpense = useCallback((expenseId) => {
-    const updatedTransactions = transactions.filter((transaction) => transaction.id !== expenseId);
-    setTransactions(updatedTransactions);
-    setStats((currentStats) => calculateExpenseStats(updatedTransactions, currentStats));
-    handleCloseDetail();
-  }, [handleCloseDetail, transactions]);
-
-  const handleClearFilters = useCallback(() => setFilters(initialFilters), []);
+  const handleSetFilters = useCallback((nextFilters) => {
+    setFilters(nextFilters);
+    setPage(1);
+  }, []);
+  const handleClearFilters = useCallback(() => handleSetFilters(initialFilters), [handleSetFilters]);
   const handleDetailEdit = useCallback(() => {
     const expenseToEdit = viewingExpense;
     handleCloseDetail();
     if (expenseToEdit) handleEditExpense(expenseToEdit);
   }, [handleCloseDetail, handleEditExpense, viewingExpense]);
+
+  useEffect(() => {
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      setIsLoading(true);
+      setLoadError('');
+      try {
+        const params = {
+          ...Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== '')),
+          page,
+          limit: pageSize,
+        };
+        const result = await listExpenses(params);
+        if (!active) return;
+        const payload = result.data || {};
+        const nextTotalPages = Math.max(result.meta?.pages || 1, 1);
+        if (page > nextTotalPages) {
+          setPage(nextTotalPages);
+          return;
+        }
+        const items = (payload.items || []).map((item) => ({ ...item, id: item.id || item._id }));
+        setTransactions(items);
+        setStats({ ...emptyStats, ...(payload.stats || {}) });
+        setTotal(result.meta?.total || 0);
+        setTotalPages(nextTotalPages);
+      } catch (error) {
+        if (active) setLoadError(getApiErrorMessage(error));
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    }, 250);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [filters, page, reloadVersion]);
+
+  useEffect(() => {
+    let active = true;
+    getSettings()
+      .then((settings) => {
+        if (active) setCategories((settings.categories?.expense || []).filter((category) => category.active !== false));
+      })
+      .catch((error) => {
+        if (active) setSettingsError(getApiErrorMessage(error));
+      });
+    return () => {
+      active = false;
+    };
+  }, [settingsReloadVersion]);
 
   useEffect(() => {
     if (!location.state?.openAddDialog) return;
@@ -134,10 +186,25 @@ const useExpensePage = () => {
     showDetail,
     editingExpense,
     viewingExpense,
-    transactions: filterExpenseTransactions(transactions, filters),
+    transactions,
     stats,
+    categories,
     filters,
-    setFilters,
+    setFilters: handleSetFilters,
+    page,
+    total,
+    totalPages,
+    isLoading,
+    isSaving,
+    isDeleting,
+    error: loadError || settingsError,
+    actionError,
+    retry: () => {
+      setSettingsError('');
+      setReloadVersion((version) => version + 1);
+      setSettingsReloadVersion((version) => version + 1);
+    },
+    setPage,
     handleAddExpense,
     handleEditExpense,
     handleViewExpense,

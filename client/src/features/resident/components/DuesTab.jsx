@@ -10,7 +10,7 @@ const paymentMethods = [
   { id: 'cash', label: 'Cash at Office', Icon: CashIcon },
 ];
 
-const DuesTab = ({ dues, onPayNow }) => {
+const DuesTab = ({ dues, onPayNow, isSubmitting = false }) => {
   const {
     selectedDue,
     setSelectedDue,
@@ -18,6 +18,7 @@ const DuesTab = ({ dues, onPayNow }) => {
     setPaymentMethod,
     totalDue,
     selectedAmount,
+    getOutstandingAmount,
     getDaysOverdue,
     formatDate,
     handlePayment,
@@ -30,8 +31,8 @@ const DuesTab = ({ dues, onPayNow }) => {
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#278b68]/15">
           <Check aria-hidden="true" className="h-6 w-6 text-[#68c99d]" />
         </div>
-        <h3 className="mb-2 text-lg font-semibold text-[#f4f4f5]">All dues are paid</h3>
-        <p className="text-sm text-[#aeb4bf]">There are no pending payments at the moment.</p>
+        <h3 className="mb-2 text-lg font-semibold text-[#f4f4f5]">No pending dues</h3>
+        <p className="text-sm text-[#aeb4bf]">There are no pending payments on your account at the moment.</p>
       </div>
     );
   }
@@ -103,7 +104,7 @@ const DuesTab = ({ dues, onPayNow }) => {
 
                   <span className="shrink-0 text-right">
                     <span className="block text-base font-semibold tabular-nums text-[#f4f4f5] sm:text-lg">
-                      ₹{(due.amount + due.penalty).toLocaleString('en-IN')}
+                      ₹{getOutstandingAmount(due).toLocaleString('en-IN')}
                     </span>
                     {due.penalty > 0 && (
                       <span className="mt-0.5 block text-xs text-[#e69a9a]">
@@ -174,8 +175,8 @@ const DuesTab = ({ dues, onPayNow }) => {
               </div>
             </fieldset>
 
-            <button type="button" onClick={handlePayment} className={paymentPrimaryButtonClass}>
-              Proceed to pay
+            <button type="button" onClick={handlePayment} disabled={isSubmitting} className={paymentPrimaryButtonClass}>
+              {isSubmitting ? 'Creating request…' : 'Create payment request'}
               <span className="tabular-nums">₹{selectedAmount.toLocaleString('en-IN')}</span>
             </button>
           </section>

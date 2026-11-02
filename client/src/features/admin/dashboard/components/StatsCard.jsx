@@ -3,7 +3,7 @@ import { TrendingUp, TrendingDown } from 'lucide-react';
 const StatsCard = ({ title, value, trend, trendValue }) => {
   // Remove ₹ from value if present, we'll add it back in white
   const numericValue = value.replace('₹', '').replace(/,/g, '');
-  const formattedValue = parseInt(numericValue).toLocaleString();
+  const formattedValue = (Number(numericValue) || 0).toLocaleString('en-IN');
 
   return (
     <div className="bg-[#1a1a1e] border border-[#26262b] rounded-xl p-2.5 md:p-4 hover:border-[#2e2f33] transition-all duration-300 min-w-0">

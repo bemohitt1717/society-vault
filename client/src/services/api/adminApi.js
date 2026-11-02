@@ -56,6 +56,7 @@ export const disableResident = async (id) => fromResident((await api.delete(`/re
 export const listResidentDues = async (residentId, params) => (
   await api.get(`/residents/${residentId}/dues`, { params })
 ).data;
+export const listAllDues = async (params) => (await api.get('/residents/dues', { params })).data;
 export const createDue = async (data) => (await api.post('/residents/dues', data)).data.data;
 
 export const listPayments = async (params) => (await api.get('/payments', { params })).data;

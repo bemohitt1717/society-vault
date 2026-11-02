@@ -1,11 +1,33 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import ExcelJS from 'exceljs';
-import { societyFinances } from '../data/mockResidentData';
+import { getSocietyFinances } from '../../../services/api/residentApi';
+import { getApiErrorMessage } from '../../../services/api/http';
+
+const emptyStats = {
+  totalIncome: 0,
+  totalExpenses: 0,
+  availableFunds: 0,
+  collectionRate: 0,
+};
+
+const fetchAllTransactions = async (params) => {
+  const firstPage = await getSocietyFinances({ ...params, page: 1, limit: 100 });
+  const data = firstPage.data || {};
+  const items = [...(data.transactions || data.items || [])];
+  for (let page = 2; page <= (firstPage.meta?.pages || 1); page += 1) {
+    const result = await getSocietyFinances({ ...params, page, limit: 100 });
+    items.push(...(result.data?.transactions || result.data?.items || []));
+  }
+  return { ...data, items };
+};
 
 const useSocietyFinancesPage = () => {
-  const [stats] = useState(societyFinances.stats);
-  const [transactions] = useState(societyFinances.recentTransactions);
+  const [stats, setStats] = useState(emptyStats);
+  const [transactions, setTransactions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
   const [filters, setFilters] = useState({
     search: '',
     dateFrom: '',
@@ -14,35 +36,39 @@ const useSocietyFinancesPage = () => {
   });
   const [isExporting, setIsExporting] = useState(false);
 
-  // Filter transactions
-  const getFilteredTransactions = () => {
-    let filtered = [...transactions];
+  useEffect(() => {
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) {
+        setIsLoading(true);
+        setError('');
+      }
+    });
+    fetchAllTransactions({
+      search: filters.search || undefined,
+      dateFrom: filters.dateFrom || undefined,
+      dateTo: filters.dateTo || undefined,
+      type: filters.type || undefined,
+    })
+      .then((result) => {
+        if (!active) return;
+        setStats({ ...emptyStats, ...(result.stats || {}) });
+        setTransactions(result.items || []);
+      })
+      .catch((requestError) => {
+        if (active) {
+          setError(getApiErrorMessage(requestError, 'Society Finances load'));
+        }
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [filters.search, filters.dateFrom, filters.dateTo, filters.type, reloadKey]);
 
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      filtered = filtered.filter(
-        (t) =>
-          t.category.toLowerCase().includes(searchLower) ||
-          t.description.toLowerCase().includes(searchLower)
-      );
-    }
-
-    if (filters.dateFrom) {
-      filtered = filtered.filter((t) => new Date(t.date) >= new Date(filters.dateFrom));
-    }
-
-    if (filters.dateTo) {
-      filtered = filtered.filter((t) => new Date(t.date) <= new Date(filters.dateTo));
-    }
-
-    if (filters.type) {
-      filtered = filtered.filter((t) => t.type === filters.type);
-    }
-
-    return filtered;
-  };
-
-  const filteredTransactions = getFilteredTransactions();
+  const filteredTransactions = transactions;
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('en-IN', {
@@ -230,7 +256,20 @@ const useSocietyFinancesPage = () => {
   };
 
   
-  return { stats, transactions, filters, setFilters, isExporting, filteredTransactions, formatDate, handleResetFilters, handleExportExcel };
+  return {
+    stats,
+    transactions,
+    filters,
+    setFilters,
+    isExporting,
+    isLoading,
+    error,
+    reload: () => setReloadKey((key) => key + 1),
+    filteredTransactions,
+    formatDate,
+    handleResetFilters,
+    handleExportExcel,
+  };
 };
 
 export default useSocietyFinancesPage;

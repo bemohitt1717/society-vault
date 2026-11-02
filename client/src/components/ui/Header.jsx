@@ -2,9 +2,9 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Bell, ChevronDown, User, LogOut, Plus, TrendingUp, TrendingDown, Settings } from 'lucide-react';
-import { getResidentProfile } from '../../features/resident/data/residentProfileStorage';
 import { logoutUser } from '../../features/auth/services/authService';
 import { getCurrentUser } from '../../services/api/authApi';
+import { getApiErrorMessage, logApiError } from '../../services/api/http';
 import ConfirmDialog from './ConfirmDialog';
 
 // ── Morphing sidebar toggle icon ──────────────────────────────────────────────
@@ -51,9 +51,9 @@ const Header = ({
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [adminName, setAdminName] = useState('');
+  const [residentName, setResidentName] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
-  const residentName = isResidentPortal ? getResidentProfile().name : adminName || 'Administrator';
 
   const addMenuRef     = useRef(null);
   const profileMenuRef = useRef(null);
@@ -66,21 +66,25 @@ const Header = ({
       setLogoutConfirmOpen(false);
       navigate('/', { replace: true });
     } catch (error) {
-      setLogoutError(error.message || 'Could not sign out. Please try again.');
+      setLogoutError(getApiErrorMessage(error));
     } finally {
       setIsLoggingOut(false);
     }
   }, [navigate]);
 
   useEffect(() => {
-    if (isResidentPortal) return undefined;
     let active = true;
     getCurrentUser()
       .then((user) => {
-        if (active) setAdminName(user?.name || '');
+        if (!active) return;
+        if (isResidentPortal) {
+          setResidentName(user?.profile?.name || user?.name || '');
+        } else {
+          setAdminName(user?.name || '');
+        }
       })
       .catch((error) => {
-        console.error('[Header] Could not load administrator profile:', error);
+        logApiError(error, `Header ${isResidentPortal ? 'resident' : 'administrator'} profile`);
       });
     return () => {
       active = false;
@@ -209,7 +213,9 @@ const Header = ({
               <User className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
             </div>
             <div className="hidden md:block text-left">
-              <p className="text-sm font-medium text-[#fffffe]">{residentName}</p>
+              <p className="text-sm font-medium text-[#fffffe]">
+                {isResidentPortal ? residentName || 'Resident' : adminName || 'Administrator'}
+              </p>
               <p className="text-xs text-[#94a1b2]">{isResidentPortal ? 'Resident' : 'Administrator'}</p>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-[#94a1b2] hidden md:block" />

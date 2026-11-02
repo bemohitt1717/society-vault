@@ -1,19 +1,49 @@
-import { useState } from 'react';
-import { reportSummary, monthlyData, expenseBreakdown, detailedTransactions } from '../data/mockReportsData';
+import { useEffect, useState } from 'react';
+import { getFinancialReport } from '../../../../services/api/adminApi';
+import { getApiErrorMessage } from '../../../../services/api/http';
 import { format } from 'date-fns';
 import ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const useReportsPage = () => {
-  const [period, setPeriod] = useState('Monthly');
-  const [showCustomDates, setShowCustomDates] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
+const reportColors = ['#d7b778', '#aa9dcc', '#d88d8e', '#83b2c5', '#89c4a5'];
 
-  const handlePeriodChange = (value) => {
-    setPeriod(value);
-    setShowCustomDates(value === 'Custom Range');
-  };
+const useReportsPage = () => {
+  const [isExporting, setIsExporting] = useState(false);
+  const [reportSummary, setReportSummary] = useState({
+    totalIncome: 0,
+    totalExpenses: 0,
+    surplus: 0,
+    pendingDues: 0,
+    period: 'All time',
+  });
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [expenseBreakdown, setExpenseBreakdown] = useState([]);
+  const [detailedTransactions, setDetailedTransactions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    getFinancialReport()
+      .then((data) => {
+        if (!active) return;
+        setReportSummary(data.summary);
+        setMonthlyData(data.monthlyData);
+        setExpenseBreakdown(data.expenseBreakdown.map((item, index) => ({
+          ...item,
+          color: reportColors[index % reportColors.length],
+        })));
+        setDetailedTransactions(data.detailedTransactions);
+      })
+      .catch((requestError) => {
+        if (active) setError(getApiErrorMessage(requestError));
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
 
   const handleExportPDF = () => {
     setIsExporting(true);
@@ -474,7 +504,17 @@ const useReportsPage = () => {
     }
   };
   
-  return { period, showCustomDates, isExporting, handlePeriodChange, handleExportPDF, handleExportExcel };
+  return {
+    isExporting,
+    isLoading,
+    error,
+    reportSummary,
+    monthlyData,
+    expenseBreakdown,
+    detailedTransactions,
+    handleExportPDF,
+    handleExportExcel,
+  };
 };
 
 export default useReportsPage;

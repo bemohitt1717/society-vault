@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUser, logoutUser, saveResidentAccountProfile } from '../services/authService';
-import { saveResidentProfile } from '../../resident/data/residentProfileStorage';
 
 const headings = {
   roleSelection: 'Welcome to SocietyVault',
@@ -60,7 +59,6 @@ const useAuthPage = () => {
     setActiveUser(user);
     if (user.role === 'resident') {
       if (user.profileComplete && user.profile) {
-        saveResidentProfile({ ...user.profile, email: user.email });
         navigate('/resident', { replace: true });
         return;
       }
@@ -82,7 +80,6 @@ const useAuthPage = () => {
     }
     const user = await saveResidentAccountProfile(activeUser.email, { ...profile, type: 'Owner' });
     setActiveUser(user);
-    saveResidentProfile({ ...user.profile, email: user.email });
     navigate('/resident', { replace: true });
   };
 

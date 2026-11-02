@@ -17,7 +17,6 @@ const useLoginForm = (selectedRole, onAuthenticated) => {
       const user = await loginUser(email, password, selectedRole);
       onAuthenticated(user);
     } catch (loginError) {
-      console.error('[Login] Sign-in failed:', loginError);
       setError(getApiErrorMessage(loginError));
     } finally {
       setIsLoading(false);

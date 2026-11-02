@@ -5,7 +5,7 @@ import {
   adminSecondaryButtonClass,
 } from '../../../../components/ui/actionButtonStyles';
 
-const IncomeDetailDrawer = ({ income, onClose, onEdit, onDelete }) => {
+const IncomeDetailDrawer = ({ income, onClose, onEdit, onDelete, error, isDeleting }) => {
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete this income transaction? This action cannot be undone.')) {
       onDelete(income.id);
@@ -31,6 +31,7 @@ const IncomeDetailDrawer = ({ income, onClose, onEdit, onDelete }) => {
 
         {/* Content */}
         <div className="flex-1 space-y-6 overflow-y-auto px-5 py-4 sm:px-6">
+          {error && <p role="alert" className="rounded-lg border border-[#8d4b4d] bg-[#2c1d20] px-3 py-2 text-sm text-[#f0b2b4]">{error}</p>}
           {/* Transaction ID Badge */}
           <div className="flex items-center justify-between">
             <span className="text-sm font-mono text-[#aeb4bf]">
@@ -124,10 +125,11 @@ const IncomeDetailDrawer = ({ income, onClose, onEdit, onDelete }) => {
           </button>
           <button
             onClick={handleDelete}
+            disabled={isDeleting}
             className={`${adminSecondaryButtonClass} flex-1`}
           >
             <Trash2 className="w-4 h-4" />
-            Delete
+            {isDeleting ? 'Deleting...' : 'Delete'}
           </button>
         </div>
       </div>

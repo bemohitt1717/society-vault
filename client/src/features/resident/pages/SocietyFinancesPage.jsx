@@ -4,17 +4,31 @@ import { exportActionButtonClass, exportActionIconClass, resetFilterButtonClass 
 import useSocietyFinancesPage from '../hooks/useSocietyFinancesPage';
 
 const SocietyFinancesPage = () => {
-  const { stats, transactions, filters, setFilters, isExporting, filteredTransactions, formatDate, handleResetFilters, handleExportExcel } = useSocietyFinancesPage();
+  const { stats, transactions, filters, setFilters, isExporting, isLoading, error, reload, filteredTransactions, formatDate, handleResetFilters, handleExportExcel } = useSocietyFinancesPage();
+  const hasActiveFilters = Boolean(filters.search.trim() || filters.dateFrom || filters.dateTo || filters.type);
 
   return (
     <div className="space-y-6">
+      {isLoading && (
+        <p role="status" className="rounded-lg border border-[#45414f] bg-[#1a1a1e] px-4 py-3 text-sm text-[#d0d3d9]">
+          Loading society finances…
+        </p>
+      )}
+      {error && (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#8b4545] bg-[#2a1c1c] px-4 py-3 text-sm text-[#f1b3b3]">
+          <span>{error}</span>
+          <button type="button" onClick={reload} className="rounded-md border border-[#a45a5a] px-3 py-1.5 font-medium text-white hover:bg-[#402525]">
+            Retry
+          </button>
+        </div>
+      )}
       
       {/* KPI Stats Cards - 4 cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <div className="bg-[#1a1a1e] border border-[#26262b] rounded-xl p-2.5 md:p-4 hover:border-[#2e2f33] transition-all duration-300 min-w-0">
           <div className="space-y-1 md:space-y-2">
             <h2 className="text-lg md:text-2xl font-bold text-[#fffffe] tracking-tight leading-none truncate">
-              ₹{stats.totalIncome.toLocaleString()}
+              {isLoading || error ? '—' : `₹${stats.totalIncome.toLocaleString()}`}
             </h2>
             <p className="text-[10px] md:text-xs text-[#8b8b90] font-medium truncate" title="Total Income">
               Total Income
@@ -24,14 +38,14 @@ const SocietyFinancesPage = () => {
             <div className="w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center flex-shrink-0 bg-[#2cb67d]/15">
               <TrendingUp className="w-2.5 h-2.5 md:w-3 md:h-3 text-[#2cb67d]" strokeWidth={2.5} />
             </div>
-            <span className="text-[10px] md:text-xs font-semibold text-[#2cb67d]">This Month</span>
+            <span className="text-[10px] md:text-xs font-semibold text-[#2cb67d]">All time</span>
           </div>
         </div>
 
         <div className="bg-[#1a1a1e] border border-[#26262b] rounded-xl p-2.5 md:p-4 hover:border-[#2e2f33] transition-all duration-300 min-w-0">
           <div className="space-y-1 md:space-y-2">
             <h2 className="text-lg md:text-2xl font-bold text-[#fffffe] tracking-tight leading-none truncate">
-              ₹{stats.totalExpenses.toLocaleString()}
+              {isLoading || error ? '—' : `₹${stats.totalExpenses.toLocaleString()}`}
             </h2>
             <p className="text-[10px] md:text-xs text-[#8b8b90] font-medium truncate" title="Total Expenses">
               Total Expenses
@@ -41,14 +55,14 @@ const SocietyFinancesPage = () => {
             <div className="w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center flex-shrink-0 bg-[#ff6b6b]/15">
               <TrendingDown className="w-2.5 h-2.5 md:w-3 md:h-3 text-[#ff6b6b]" strokeWidth={2.5} />
             </div>
-            <span className="text-[10px] md:text-xs font-semibold text-[#ff6b6b]">This Month</span>
+            <span className="text-[10px] md:text-xs font-semibold text-[#ff6b6b]">All time</span>
           </div>
         </div>
 
         <div className="bg-[#1a1a1e] border border-[#26262b] rounded-xl p-2.5 md:p-4 hover:border-[#2e2f33] transition-all duration-300 min-w-0">
           <div className="space-y-1 md:space-y-2">
             <h2 className="text-lg md:text-2xl font-bold text-[#fffffe] tracking-tight leading-none truncate">
-              ₹{stats.availableFunds.toLocaleString()}
+              {isLoading || error ? '—' : `₹${stats.availableFunds.toLocaleString()}`}
             </h2>
             <p className="text-[10px] md:text-xs text-[#8b8b90] font-medium truncate" title="Available Funds">
               Available Funds
@@ -65,7 +79,7 @@ const SocietyFinancesPage = () => {
         <div className="bg-[#1a1a1e] border border-[#26262b] rounded-xl p-2.5 md:p-4 hover:border-[#2e2f33] transition-all duration-300 min-w-0">
           <div className="space-y-1 md:space-y-2">
             <h2 className="text-lg md:text-2xl font-bold text-[#fffffe] tracking-tight leading-none truncate">
-              {stats.collectionRate}%
+              {isLoading || error ? '—' : `${stats.collectionRate}%`}
             </h2>
             <p className="text-[10px] md:text-xs text-[#8b8b90] font-medium truncate" title="Collection Rate">
               Collection Rate
@@ -75,7 +89,7 @@ const SocietyFinancesPage = () => {
             <div className="w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center flex-shrink-0 bg-[#ffa500]/15">
               <Percent className="w-2.5 h-2.5 md:w-3 md:h-3 text-[#ffa500]" strokeWidth={2.5} />
             </div>
-            <span className="text-[10px] md:text-xs font-semibold text-[#2cb67d]">Excellent</span>
+            <span className="text-[10px] md:text-xs font-semibold text-[#2cb67d]">Paid / due</span>
           </div>
         </div>
       </div>
@@ -85,13 +99,30 @@ const SocietyFinancesPage = () => {
         
         {/* LEFT: Transactions Table (70% width) */}
         <div className="lg:col-span-8">
-          {filteredTransactions.length === 0 ? (
+          {isLoading || error || filteredTransactions.length === 0 ? (
             <div className="bg-[#1a1a1e] border border-[#26262b] rounded-xl p-8 text-center">
               <Filter className="w-12 h-12 mx-auto mb-4 text-[#94a1b2]" />
-              <h3 className="text-lg font-semibold text-[#fffffe] mb-2">No Transactions Found</h3>
+              <h3 className="text-lg font-semibold text-[#fffffe] mb-2">
+                {isLoading ? 'Loading Transactions' : error ? 'Transactions Unavailable' : hasActiveFilters ? 'No Matching Transactions' : 'No Transactions Yet'}
+              </h3>
               <p className="text-sm text-[#94a1b2]">
-                Try adjusting your filters or search terms.
+                {isLoading
+                  ? 'Transactions are being loaded from the society records.'
+                  : error
+                    ? 'Retry the request to load society transactions.'
+                    : hasActiveFilters
+                      ? 'No transactions match these filters. Try changing your search or filters.'
+                      : 'Society income and expenses will appear here after an administrator adds them.'}
               </p>
+              {!isLoading && !error && hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className={`${resetFilterButtonClass} mt-4`}
+                >
+                  Reset filters
+                </button>
+              )}
             </div>
           ) : (
             <div className="bg-[#1a1a1e] border border-[#26262b] rounded-xl overflow-hidden">
@@ -198,7 +229,7 @@ const SocietyFinancesPage = () => {
             <h3 className="text-base font-semibold text-[#fffffe] mb-4">Export Data</h3>
             <button
               onClick={handleExportExcel}
-              disabled={isExporting || filteredTransactions.length === 0}
+              disabled={isExporting || isLoading || Boolean(error) || filteredTransactions.length === 0}
               className={`${exportActionButtonClass} w-full`}
             >
               <FileSpreadsheet className={`w-4 h-4 ${exportActionIconClass}`} />

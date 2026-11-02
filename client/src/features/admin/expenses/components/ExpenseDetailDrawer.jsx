@@ -4,7 +4,7 @@ import {
   adminSecondaryButtonClass,
 } from '../../../../components/ui/actionButtonStyles';
 
-const ExpenseDetailDrawer = ({ expense, isOpen, onClose, onEdit, onDelete }) => {
+const ExpenseDetailDrawer = ({ expense, isOpen, onClose, onEdit, onDelete, error, isDeleting }) => {
 
   if (!isOpen || !expense) return null;
 
@@ -13,10 +13,9 @@ const ExpenseDetailDrawer = ({ expense, isOpen, onClose, onEdit, onDelete }) => 
     onClose();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm(`Are you sure you want to delete expense "${expense.description}"?`)) {
-      onDelete(expense.id);
-      onClose();
+      await onDelete(expense.id);
     }
   };
 
@@ -63,6 +62,7 @@ const ExpenseDetailDrawer = ({ expense, isOpen, onClose, onEdit, onDelete }) => 
 
         {/* Content */}
         <div className="space-y-5 px-5 py-5 sm:px-6">
+          {error && <p role="alert" className="rounded-lg border border-[#8d4b4d] bg-[#2c1d20] px-3 py-2 text-sm text-[#f0b2b4]">{error}</p>}
           {/* Status Badge */}
           <div className="flex items-center gap-3">
             <span className={`text-sm font-medium ${getStatusColor(expense.paymentStatus)}`}>
@@ -164,10 +164,11 @@ const ExpenseDetailDrawer = ({ expense, isOpen, onClose, onEdit, onDelete }) => 
           </button>
           <button
             onClick={handleDelete}
+            disabled={isDeleting}
             className={`${adminSecondaryButtonClass} flex-1 text-[#d59696] hover:text-[#e4b0b0]`}
           >
             <Trash2 className="w-4 h-4" />
-            Delete
+            {isDeleting ? 'Deleting...' : 'Delete'}
           </button>
         </div>
       </div>

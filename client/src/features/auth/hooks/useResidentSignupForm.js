@@ -27,7 +27,6 @@ const useResidentSignupForm = (onRegistered) => {
       const user = await registerUser(formData.email, formData.password, 'resident');
       onRegistered(user);
     } catch (registrationError) {
-      console.error('[Resident signup] Account creation failed:', registrationError);
       setError(getApiErrorMessage(registrationError));
     } finally {
       setIsLoading(false);

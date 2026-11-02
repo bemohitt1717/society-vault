@@ -39,6 +39,11 @@ export const listAllDues = asyncHandler(async (req, res) => {
   return sendData(res, result.items, 200, result.meta);
 });
 
+export const listDuesForAdmin = asyncHandler(async (req, res) => {
+  const result = await residentService.listAllDues(req.validated.query);
+  return sendData(res, { items: result.items, stats: result.stats }, 200, result.meta);
+});
+
 export const createDue = asyncHandler(async (req, res) => {
   const due = await residentService.createDue(req.validated.body);
   await recordAuditEvent({ actor: req.user, action: 'created', entity: 'maintenance_due', entityId: due.id, summary: due.month, ipAddress: req.ip });

@@ -1,11 +1,9 @@
 
 import { Download, FileSpreadsheet, TrendingUp, TrendingDown, DollarSign, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { reportSummary, monthlyData, expenseBreakdown, detailedTransactions, periodOptions } from '../data/mockReportsData';
 import { format } from 'date-fns';
 
 import {
-  adminFormFieldClass,
   exportActionButtonClass,
   exportActionIconClass,
 } from '../../../../components/ui/actionButtonStyles';
@@ -15,7 +13,13 @@ import useReportsPage from '../hooks/useReportsPage';
 const expenseChartColors = ['#d7b778', '#aa9dcc', '#d88d8e', '#83b2c5', '#89c4a5'];
 
 const ReportsPage = () => {
-  const { period, showCustomDates, isExporting, handlePeriodChange, handleExportPDF, handleExportExcel } = useReportsPage();
+  const {
+    isExporting, isLoading, error, reportSummary, monthlyData, expenseBreakdown, detailedTransactions,
+    handleExportPDF, handleExportExcel,
+  } = useReportsPage();
+
+  if (isLoading) return <p className="text-sm text-[#94a1b2]">Loading financial report...</p>;
+  if (error) return <p role="alert" className="text-sm text-[#f0b2b4]">{error}</p>;
 
   return (
     <div className="space-y-4">
@@ -65,7 +69,7 @@ const ReportsPage = () => {
             {/* Income vs Expenses Chart */}
             <div className="bg-[#1a1a1e] border border-[#26262b] rounded-2xl p-4">
               <h3 className="text-sm font-semibold text-[#fffffe] mb-4">Income vs Expenses</h3>
-              <ResponsiveContainer width="100%" height={250}>
+              {monthlyData.length ? <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#303136" />
                   <XAxis dataKey="month" stroke="#94a1b2" style={{ fontSize: '12px' }} />
@@ -78,13 +82,13 @@ const ReportsPage = () => {
                   <Bar dataKey="income" fill="#91c7a9" radius={[5, 5, 0, 0]} />
                   <Bar dataKey="expenses" fill="#d89295" radius={[5, 5, 0, 0]} />
                 </BarChart>
-              </ResponsiveContainer>
+              </ResponsiveContainer> : <p className="py-12 text-center text-sm text-[#94a1b2]">No financial records yet.</p>}
             </div>
 
             {/* Expense Breakdown */}
             <div className="bg-[#1a1a1e] border border-[#26262b] rounded-2xl p-4">
               <h3 className="text-sm font-semibold text-[#fffffe] mb-4">Expense Breakdown</h3>
-              <ResponsiveContainer width="100%" height={250}>
+              {expenseBreakdown.length ? <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
                     data={expenseBreakdown}
@@ -104,7 +108,7 @@ const ReportsPage = () => {
                     formatter={(value) => `₹${value.toLocaleString()}`}
                   />
                 </PieChart>
-              </ResponsiveContainer>
+              </ResponsiveContainer> : <p className="py-12 text-center text-sm text-[#94a1b2]">No expense records yet.</p>}
               <div className="grid grid-cols-2 gap-2 mt-4">
                 {expenseBreakdown.map((item, index) => (
                   <div key={item.category} className="flex items-center gap-2">
@@ -137,8 +141,10 @@ const ReportsPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#26262b]">
-                  {detailedTransactions.map((txn, idx) => (
-                    <tr key={idx} className="hover:bg-[#1e1e22] transition-colors">
+                  {detailedTransactions.length === 0 ? (
+                    <tr><td colSpan="6" className="px-4 py-10 text-center text-sm text-[#94a1b2]">No transactions yet.</td></tr>
+                  ) : detailedTransactions.map((txn) => (
+                    <tr key={txn.id} className="hover:bg-[#1e1e22] transition-colors">
                       <td className="px-4 py-3 text-sm text-[#fffffe]">{format(new Date(txn.date), 'MMM dd')}</td>
                       <td className="px-4 py-3 text-sm text-[#94a1b2] font-mono">{txn.reference}</td>
                       <td className="px-4 py-3 text-sm text-[#fffffe] max-w-xs truncate">{txn.description}</td>
@@ -164,38 +170,7 @@ const ReportsPage = () => {
               <label className="block text-xs font-semibold text-[#fffffe] uppercase tracking-wider mb-2">Report Options</label>
               
               <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-[#94a1b2] mb-1.5">Period</label>
-                  <select
-                    value={period}
-                    onChange={(e) => handlePeriodChange(e.target.value)}
-                    className={`${adminFormFieldClass} cursor-pointer`}
-                  >
-                    {periodOptions.map((opt) => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {showCustomDates && (
-                  <>
-                    <div>
-                      <label className="block text-xs font-medium text-[#94a1b2] mb-1.5">Start Date</label>
-                      <input
-                        type="date"
-                        className={adminFormFieldClass}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-[#94a1b2] mb-1.5">End Date</label>
-                      <input
-                        type="date"
-                        className={adminFormFieldClass}
-                      />
-                    </div>
-                  </>
-                )}
-
+                <p className="text-sm text-[#94a1b2]">Financial data from all database records.</p>
                 <button
                   onClick={handleExportPDF}
                   disabled={isExporting}

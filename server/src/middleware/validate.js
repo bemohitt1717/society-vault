@@ -10,7 +10,7 @@ const validate = (schema) => (req, _res, next) => {
   if (!result.success) {
     return next(new ApiError(
       400,
-      'Request validation failed.',
+      'Some information is missing or invalid.',
       result.error.issues.map(({ path, message }) => ({ path: path.join('.'), message })),
     ));
   }

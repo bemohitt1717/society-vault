@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { incomeCategories, paymentModes } from '../data/mockIncomeData';
+import { paymentModes } from '../data/incomeOptions';
 import useIncomeForm from '../hooks/useIncomeForm';
 import {
   adminDialogBackdropClass,
@@ -9,7 +9,7 @@ import {
   adminSecondaryButtonClass,
 } from '../../../../components/ui/actionButtonStyles';
 
-const IncomeForm = ({ income, onSave, onClose }) => {
+const IncomeForm = ({ income, categories, actionError, isSaving, onSave, onClose }) => {
   const { formData, errors, handleChange, handleSubmit } = useIncomeForm(income, onSave);
   return (
     <div className={adminDialogBackdropClass}>
@@ -31,6 +31,7 @@ const IncomeForm = ({ income, onSave, onClose }) => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-5 py-4 sm:px-6">
+          {actionError && <p role="alert" className="mb-4 rounded-lg border border-[#8d4b4d] bg-[#2c1d20] px-3 py-2 text-sm text-[#f0b2b4]">{actionError}</p>}
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
@@ -59,8 +60,8 @@ const IncomeForm = ({ income, onSave, onClose }) => {
                   className={`${adminFormFieldClass} cursor-pointer ${errors.category ? 'border-[#c99393]' : ''}`}
                 >
                   <option value="">Select Category</option>
-                  {incomeCategories.map((cat) => (
-                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id || cat._id} value={cat.name}>{cat.name}</option>
                   ))}
                 </select>
                 {errors.category && (
@@ -185,9 +186,10 @@ const IncomeForm = ({ income, onSave, onClose }) => {
           </button>
           <button
             onClick={handleSubmit}
+            disabled={isSaving}
             className={adminPrimaryButtonClass}
           >
-            {income ? 'Update Income' : 'Save Income'}
+            {isSaving ? 'Saving...' : income ? 'Update Income' : 'Save Income'}
           </button>
         </div>
       </div>

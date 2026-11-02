@@ -3,11 +3,10 @@ import { format } from 'date-fns';
 import ExcelJS from 'exceljs';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { getResidentProfile } from '../data/residentProfileStorage';
 import { createPdfTableStyles, drawPdfFooter, formatPdfAmount, pdfColors } from '../utils/pdfExportUtils';
 import { downloadResidentReceiptPdf } from '../utils/receiptPdf';
 
-const usePaymentHistoryTab = ({ payments }) => {
+const usePaymentHistoryTab = ({ payments, profile }) => {
   const [filters, setFilters] = useState({
     search: '',
     dateFrom: '',
@@ -26,8 +25,8 @@ const usePaymentHistoryTab = ({ payments }) => {
       const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(
         (p) =>
-          p.category.toLowerCase().includes(searchLower) ||
-          p.month.toLowerCase().includes(searchLower) ||
+          (p.category || '').toLowerCase().includes(searchLower) ||
+          (p.month || '').toLowerCase().includes(searchLower) ||
           p.transactionId?.toLowerCase().includes(searchLower) ||
           p.receiptNo?.toLowerCase().includes(searchLower)
       );
@@ -57,7 +56,7 @@ const usePaymentHistoryTab = ({ payments }) => {
   const filteredPayments = getFilteredPayments();
 
   // Get unique categories
-  const categories = [...new Set(payments.map((p) => p.category))];
+  const categories = [...new Set(payments.map((p) => p.category).filter(Boolean))];
 
   const handleResetFilters = () => {
     setFilters({
@@ -73,7 +72,6 @@ const usePaymentHistoryTab = ({ payments }) => {
     setIsExporting(true);
 
     try {
-      const residentProfile = getResidentProfile();
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
@@ -103,7 +101,7 @@ const usePaymentHistoryTab = ({ payments }) => {
         doc.setLineWidth(0.3);
         doc.line(margin, 34, pageWidth - margin, 34);
         doc.setFontSize(8);
-        doc.text(`${residentProfile.name}  |  Flat ${residentProfile.flatNo}, Block ${residentProfile.wing}`, margin, 41);
+        doc.text(`${profile.name || 'Resident'}  |  Flat ${profile.flatNo || 'Not provided'}, Block ${profile.wing || 'Not provided'}`, margin, 41);
       };
 
       drawHeader();
@@ -205,7 +203,7 @@ const usePaymentHistoryTab = ({ payments }) => {
         ...payment,
         id: payment.receiptNo,
         status: payment.status
-      });
+      }, profile);
     } catch (error) {
       console.error('❌ [Payment History] Receipt PDF export failed:', error);
       alert('Failed to download receipt. Please try again.');

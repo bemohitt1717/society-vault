@@ -13,7 +13,6 @@ const GoogleLoginButton = ({ onAuthenticated, buttonLabel = 'Continue with Googl
       const user = await googleLogin();
       onAuthenticated(user);
     } catch (loginError) {
-      console.error('[Google sign-in] Failed:', loginError);
       setError(getApiErrorMessage(loginError));
     } finally {
       setIsLoading(false);

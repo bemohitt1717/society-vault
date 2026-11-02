@@ -136,13 +136,16 @@ export const idParamSchema = z.object({
   params: z.object({ id: objectId }),
 });
 
-export const residentDuesListSchema = z.object({
-  params: z.object({ id: objectId }).optional(),
+const residentDuesQuerySchema = z.object({
   query: z.object({
     page: z.string().regex(/^\d+$/).optional(),
     limit: z.string().regex(/^\d+$/).optional(),
     status: z.enum(['pending', 'partially_paid', 'paid', 'cancelled']).optional(),
   }),
+});
+export const residentDuesListSchema = residentDuesQuerySchema;
+export const residentDuesByIdSchema = residentDuesQuerySchema.extend({
+  params: z.object({ id: objectId }),
 });
 
 export const listQuerySchema = z.object({

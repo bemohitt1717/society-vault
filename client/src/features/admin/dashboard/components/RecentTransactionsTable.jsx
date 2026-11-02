@@ -1,19 +1,15 @@
-import { ArrowUpRight, ArrowDownRight, ExternalLink } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { format } from 'date-fns';
 import Card from '../../../../components/ui/Card';
 
 const RecentTransactionsTable = ({ transactions }) => {
   return (
     <Card>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6">
         <div>
           <h3 className="text-lg font-semibold text-[#fffffe]">Recent Transactions</h3>
-          <p className="text-sm text-[#94a1b2] mt-1">Latest 5 transactions</p>
+          <p className="text-sm text-[#94a1b2] mt-1">Latest transactions from your database</p>
         </div>
-        <button className="flex items-center gap-2 text-sm text-[#b7acef] hover:text-[#d0c8f4] transition-colors cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b7acef]">
-          View All
-          <ExternalLink className="w-4 h-4" />
-        </button>
       </div>
 
       <div className="overflow-x-auto">
@@ -28,9 +24,11 @@ const RecentTransactionsTable = ({ transactions }) => {
             </tr>
           </thead>
           <tbody>
-            {transactions.map((transaction, index) => (
+            {transactions.length === 0 ? (
+              <tr><td colSpan="5" className="py-10 text-center text-sm text-[#94a1b2]">No transactions yet.</td></tr>
+            ) : transactions.map((transaction) => (
               <tr 
-                key={index}
+                key={`${transaction.type}-${transaction.id}`}
                 className="border-b border-[#2e2f33]/50 hover:bg-[#242629]/50 transition-colors"
               >
                 <td className="py-4 px-2">

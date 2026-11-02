@@ -101,6 +101,54 @@ export const getResidentDues = async (residentId, query = {}) => {
   return { items, meta: { page, limit, total, pages: Math.ceil(total / limit) } };
 };
 
+export const listAllDues = async (query = {}) => {
+  const { page, limit, skip } = parsePagination(query);
+  const filter = query.status ? { status: query.status } : {};
+  const [items, total, outstanding] = await Promise.all([
+    MaintenanceDue.find(filter)
+      .populate('resident', 'email profile.name profile.flatNo profile.wing')
+      .sort({ dueDate: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    MaintenanceDue.countDocuments(filter),
+    MaintenanceDue.aggregate([
+      { $match: { status: { $in: ['pending', 'partially_paid'] } } },
+      {
+        $group: {
+          _id: null,
+          amount: { $sum: { $subtract: [{ $add: ['$amount', '$penalty'] }, '$paidAmount'] } },
+          bills: { $sum: 1 },
+          overdue: {
+            $sum: {
+              $cond: [
+                { $lt: ['$dueDate', new Date()] },
+                { $subtract: [{ $add: ['$amount', '$penalty'] }, '$paidAmount'] },
+                0,
+              ],
+            },
+          },
+        },
+      },
+    ]),
+  ]);
+  return {
+    items: items.map((due) => ({
+      ...due,
+      id: due._id,
+      residentName: due.resident?.profile?.name || due.resident?.email || '',
+      flat: [due.resident?.profile?.wing, due.resident?.profile?.flatNo].filter(Boolean).join('-'),
+      outstanding: due.amount + due.penalty - due.paidAmount,
+    })),
+    stats: {
+      totalOutstanding: outstanding[0]?.amount || 0,
+      overdueAmount: outstanding[0]?.overdue || 0,
+      unpaidBills: outstanding[0]?.bills || 0,
+    },
+    meta: { page, limit, total, pages: Math.ceil(total / limit) },
+  };
+};
+
 export const createDue = async (data) => {
   const resident = await User.findOne({ _id: data.resident, role: 'resident', status: 'active' }).select('_id');
   if (!resident) throw new ApiError(404, 'Active resident not found.');

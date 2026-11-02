@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { downloadResidentReceiptPdf } from '../utils/receiptPdf';
 
-const useReceiptsTab = (receipts) => {
+const useReceiptsTab = (receipts, profile) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isExporting, setIsExporting] = useState(false);
 
@@ -17,7 +17,7 @@ const useReceiptsTab = (receipts) => {
   const handleDownloadReceipt = (receipt) => {
     setIsExporting(true);
     try {
-      downloadResidentReceiptPdf(receipt);
+      downloadResidentReceiptPdf(receipt, profile);
     } catch (error) {
       console.error('[Receipts] PDF export failed:', error);
       alert('Failed to download receipt. Please try again.');

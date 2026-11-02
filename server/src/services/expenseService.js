@@ -25,17 +25,26 @@ const makeExpenseFilter = ({ search, category, vendor, status, dateFrom, dateTo 
 export const listExpenses = async (query) => {
   const { page, limit, skip } = parsePagination(query);
   const filter = makeExpenseFilter(query);
-  const [items, total, stats] = await Promise.all([
+  const [items, total, stats, categoryTotals] = await Promise.all([
     Expense.find(filter).sort({ date: -1, createdAt: -1 }).skip(skip).limit(limit).lean(),
     Expense.countDocuments(filter),
     Expense.aggregate([
       { $match: filter },
       { $group: { _id: null, totalExpenses: { $sum: '$amount' }, transactionCount: { $sum: 1 } } },
     ]),
+    Expense.aggregate([
+      { $match: filter },
+      { $group: { _id: '$category', total: { $sum: '$amount' } } },
+      { $sort: { total: -1 } },
+      { $limit: 1 },
+    ]),
   ]);
   return {
     items,
-    stats: stats[0] || { totalExpenses: 0, transactionCount: 0 },
+    stats: {
+      ...(stats[0] || { totalExpenses: 0, transactionCount: 0 }),
+      topCategory: categoryTotals[0]?._id || '',
+    },
     meta: { page, limit, total, pages: Math.ceil(total / limit) },
   };
 };

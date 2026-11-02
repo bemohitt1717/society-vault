@@ -1,10 +1,8 @@
 import { format } from 'date-fns';
 import { jsPDF } from 'jspdf';
-import { getResidentProfile } from '../data/residentProfileStorage';
 import { drawPdfFooter, formatPdfAmount, pdfColors } from './pdfExportUtils';
 
-export const downloadResidentReceiptPdf = (receipt) => {
-  const residentProfile = getResidentProfile();
+export const downloadResidentReceiptPdf = (receipt, residentProfile = {}) => {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -53,9 +51,9 @@ export const downloadResidentReceiptPdf = (receipt) => {
   doc.text('RESIDENT DETAILS', margin + 3, 61);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...colors.ink);
-  doc.text(`Name: ${residentProfile.name}`, margin + 3, 68);
-  doc.text(`Flat No: ${residentProfile.flatNo} | Block: ${residentProfile.wing}`, margin + 3, 74);
-  doc.text(`Email: ${residentProfile.email}`, margin + 3, 80);
+  doc.text(`Name: ${residentProfile.name || 'Not provided'}`, margin + 3, 68);
+  doc.text(`Flat No: ${residentProfile.flatNo || 'Not provided'} | Block: ${residentProfile.wing || 'Not provided'}`, margin + 3, 74);
+  doc.text(`Email: ${residentProfile.email || 'Not provided'}`, margin + 3, 80);
 
   doc.setFillColor(...colors.white);
   doc.roundedRect(margin, 92, pageWidth - margin * 2, 70, 1.5, 1.5, 'FD');

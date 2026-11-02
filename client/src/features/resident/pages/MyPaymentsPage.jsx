@@ -4,11 +4,43 @@ import ReceiptsTab from '../components/ReceiptsTab';
 import useMyPaymentsPage from '../hooks/useMyPaymentsPage';
 
 const MyPaymentsPage = () => {
-  const { activeTab, setActiveTab, dues, payments, receipts, tabs, payNow } = useMyPaymentsPage();
+  const {
+    activeTab,
+    setActiveTab,
+    dues,
+    payments,
+    receipts,
+    profile,
+    tabs,
+    payNow,
+    isLoading,
+    isSubmitting,
+    error,
+    message,
+    reload,
+  } = useMyPaymentsPage();
 
   return (
     <div className="space-y-6">
-      
+      {isLoading && (
+        <p role="status" className="rounded-lg border border-[#45414f] bg-[#1a1a1e] px-4 py-3 text-sm text-[#d0d3d9]">
+          Loading your payment information…
+        </p>
+      )}
+      {error && (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#8b4545] bg-[#2a1c1c] px-4 py-3 text-sm text-[#f1b3b3]">
+          <span>{error}</span>
+          <button type="button" onClick={reload} className="rounded-md border border-[#a45a5a] px-3 py-1.5 font-medium text-white hover:bg-[#402525]">
+            Retry
+          </button>
+        </div>
+      )}
+      {message && (
+        <p role="status" className="rounded-lg border border-[#3d795e] bg-[#1b2b23] px-4 py-3 text-sm text-[#a8e0c1]">
+          {message}
+        </p>
+      )}
+
       {/* Tab Navigation */}
       <nav aria-label="Payment sections" className="rounded-xl border border-[#303136] bg-[#1a1a1e] p-1.5">
         <div className="grid grid-cols-3 gap-1">
@@ -46,16 +78,24 @@ const MyPaymentsPage = () => {
 
       {/* Tab Content */}
       <div>
+        {isLoading || error ? (
+          <div className="rounded-xl border border-[#303136] bg-[#1a1a1e] px-6 py-10 text-center text-sm text-[#aeb4bf]">
+            {isLoading ? 'Fetching account data…' : 'Payment data is unavailable until the request succeeds.'}
+          </div>
+        ) : (
+          <>
         {activeTab === 'dues' && (
-          <DuesTab dues={dues} onPayNow={payNow} />
+          <DuesTab dues={dues} onPayNow={payNow} isSubmitting={isSubmitting} />
         )}
         
         {activeTab === 'history' && (
-          <PaymentHistoryTab payments={payments} />
+          <PaymentHistoryTab payments={payments} profile={profile} />
         )}
         
         {activeTab === 'receipts' && (
-          <ReceiptsTab receipts={receipts} />
+          <ReceiptsTab receipts={receipts} profile={profile} />
+        )}
+          </>
         )}
       </div>
 

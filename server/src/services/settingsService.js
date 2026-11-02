@@ -35,9 +35,12 @@ export const getSettings = async () => {
 };
 
 export const updateSettings = async (data) => {
+  const insertDefaults = Object.fromEntries(
+    Object.entries(defaultSettings).filter(([field]) => !(field in data)),
+  );
   const society = await SocietySettings.findOneAndUpdate(
     { key: 'primary' },
-    { $set: data, $setOnInsert: defaultSettings },
+    { $set: data, $setOnInsert: insertDefaults },
     { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true },
   );
   return society;

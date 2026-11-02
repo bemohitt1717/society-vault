@@ -4,10 +4,25 @@ import UpcomingMaintenanceCard from '../components/UpcomingMaintenanceCard';
 import useResidentDashboard from '../hooks/useResidentDashboard';
 
 const ResidentDashboard = () => {
-  const { stats, recentPayments, maintenance, viewAllPayments } = useResidentDashboard();
+  const { stats, recentPayments, maintenance, isLoading, error, reload, viewAllPayments } = useResidentDashboard();
 
   return (
     <div className="space-y-6">
+      {isLoading && (
+        <p role="status" className="rounded-lg border border-[#45414f] bg-[#1a1a1e] px-4 py-3 text-sm text-[#d0d3d9]">
+          Loading your dashboard…
+        </p>
+      )}
+      {error && (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#8b4545] bg-[#2a1c1c] px-4 py-3 text-sm text-[#f1b3b3]">
+          <span>{error}</span>
+          <button type="button" onClick={reload} className="rounded-md border border-[#a45a5a] px-3 py-1.5 font-medium text-white hover:bg-[#402525]">
+            Retry
+          </button>
+        </div>
+      )}
+      {!isLoading && !error && (
+        <>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 md:gap-6">
         <div className="min-w-0 rounded-xl border border-[#26262b] bg-[#1a1a1e] p-2.5 transition-colors duration-200 hover:border-[#35363b] md:p-4">
           <div className="space-y-1 md:space-y-2">
@@ -39,7 +54,7 @@ const ResidentDashboard = () => {
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#2cb67d]/15 md:h-6 md:w-6">
               <CreditCard aria-hidden="true" className="h-3 w-3 text-[#2cb67d]" strokeWidth={2.5} />
             </span>
-            <span className="text-[10px] font-semibold text-[#2cb67d] md:text-xs">+100%</span>
+            <span className="text-[10px] font-semibold text-[#2cb67d] md:text-xs">This month</span>
           </div>
         </div>
 
@@ -56,7 +71,7 @@ const ResidentDashboard = () => {
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#7f5af0]/15 md:h-6 md:w-6">
               <TrendingUp aria-hidden="true" className="h-3 w-3 text-[#7f5af0]" strokeWidth={2.5} />
             </span>
-            <span className="text-[10px] font-semibold text-[#2cb67d] md:text-xs">+12%</span>
+            <span className="text-[10px] font-semibold text-[#2cb67d] md:text-xs">Year to date</span>
           </div>
         </div>
 
@@ -65,15 +80,15 @@ const ResidentDashboard = () => {
             <h2 className="truncate text-lg font-bold leading-none tracking-tight text-[#fffffe] md:text-2xl">
               {stats.pendingReceipts}
             </h2>
-            <p className="truncate text-[10px] font-medium text-[#aeb4bf] md:text-xs" title="Pending Receipts">
-              Pending Receipts
+            <p className="truncate text-[10px] font-medium text-[#aeb4bf] md:text-xs" title="Receipts Available">
+              Receipts Available
             </p>
           </div>
           <div className="mt-2 flex items-center gap-1 md:mt-3 md:gap-2">
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#ffa500]/15 md:h-6 md:w-6">
               <FileText aria-hidden="true" className="h-3 w-3 text-[#ffa500]" strokeWidth={2.5} />
             </span>
-            <span className="text-[10px] font-semibold text-[#94a1b2] md:text-xs">To Download</span>
+            <span className="text-[10px] font-semibold text-[#94a1b2] md:text-xs">Completed payments</span>
           </div>
         </div>
       </div>
@@ -98,6 +113,8 @@ const ResidentDashboard = () => {
           <UpcomingMaintenanceCard maintenanceList={maintenance} />
         </aside>
       </div>
+        </>
+      )}
     </div>
   );
 };

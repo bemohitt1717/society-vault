@@ -1,11 +1,32 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import ExcelJS from 'exceljs';
-import { paymentHistory, receipts } from '../data/mockResidentData';
-import { getResidentProfile } from '../data/residentProfileStorage';
+import { getMyPaymentReport, listMyPayments, listMyReceipts } from '../../../services/api/residentApi';
+import { getApiErrorMessage } from '../../../services/api/http';
+import useResidentProfile from './useResidentProfile';
 import { createPdfTableStyles, drawPdfFooter, formatPdfAmount, pdfColors } from '../utils/pdfExportUtils';
+
+const fetchAllReceipts = async (params) => {
+  const firstPage = await listMyReceipts({ ...params, page: 1, limit: 100 });
+  const allReceipts = [...(firstPage.data || [])];
+  for (let page = 2; page <= (firstPage.meta?.pages || 1); page += 1) {
+    const result = await listMyReceipts({ ...params, page, limit: 100 });
+    allReceipts.push(...(result.data || []));
+  }
+  return allReceipts;
+};
+
+const fetchAllPayments = async (params) => {
+  const firstPage = await listMyPayments({ ...params, page: 1, limit: 100 });
+  const allPayments = [...(firstPage.data || [])];
+  for (let page = 2; page <= (firstPage.meta?.pages || 1); page += 1) {
+    const result = await listMyPayments({ ...params, page, limit: 100 });
+    allPayments.push(...(result.data || []));
+  }
+  return allPayments;
+};
 
 const useResidentReportsPage = () => {
   const [filters, setFilters] = useState({
@@ -15,6 +36,63 @@ const useResidentReportsPage = () => {
     format: 'pdf'
   });
   const [isExporting, setIsExporting] = useState(false);
+  const [payments, setPayments] = useState([]);
+  const [receipts, setReceipts] = useState([]);
+  const [reportSummary, setReportSummary] = useState({ totalPaid: 0, completedCount: 0 });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
+  const { profile, isLoading: isProfileLoading, error: profileError, reload: reloadProfile } = useResidentProfile();
+
+  useEffect(() => {
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) {
+        setIsLoading(true);
+        setError('');
+      }
+    });
+    Promise.all([
+      getMyPaymentReport({
+        dateFrom: filters.dateFrom || undefined,
+        dateTo: filters.dateTo || undefined,
+      }),
+      fetchAllPayments({
+        dateFrom: filters.dateFrom || undefined,
+        dateTo: filters.dateTo || undefined,
+      }),
+      fetchAllReceipts({
+        dateFrom: filters.dateFrom || undefined,
+        dateTo: filters.dateTo || undefined,
+      }),
+    ])
+      .then(([report, paymentResult, receiptResult]) => {
+        if (!active) return;
+        const normalizePayment = (payment) => ({
+          ...payment,
+          id: payment.id || payment._id,
+          date: payment.date ? new Date(payment.date).toISOString().slice(0, 10) : '',
+          amount: Number(payment.amount) || 0,
+          transactionId: payment.transactionId || '',
+          receiptNo: payment.receiptNo || '',
+          paymentMode: payment.paymentMode || '',
+        });
+        setPayments(paymentResult.map(normalizePayment));
+        setReportSummary(report.summary || { totalPaid: 0, completedCount: 0 });
+        setReceipts(receiptResult);
+      })
+      .catch((requestError) => {
+        if (active) {
+          setError(getApiErrorMessage(requestError));
+        }
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [filters.dateFrom, filters.dateTo, reloadKey]);
 
   const reportTypes = [
     { value: 'payment', label: 'Payment Statement' },
@@ -24,31 +102,11 @@ const useResidentReportsPage = () => {
 
   // Filter payment data based on date range
   const getFilteredPayments = () => {
-    let filtered = [...paymentHistory];
-    
-    if (filters.dateFrom) {
-      filtered = filtered.filter(p => new Date(p.date) >= new Date(filters.dateFrom));
-    }
-    
-    if (filters.dateTo) {
-      filtered = filtered.filter(p => new Date(p.date) <= new Date(filters.dateTo));
-    }
-    
-    return filtered;
+    return [...payments];
   };
 
   const getFilteredReceipts = () => {
-    let filtered = [...receipts];
-
-    if (filters.dateFrom) {
-      filtered = filtered.filter((receipt) => new Date(receipt.date) >= new Date(filters.dateFrom));
-    }
-
-    if (filters.dateTo) {
-      filtered = filtered.filter((receipt) => new Date(receipt.date) <= new Date(filters.dateTo));
-    }
-
-    return filtered;
+    return [...receipts];
   };
 
   // PDF Export Function
@@ -56,7 +114,6 @@ const useResidentReportsPage = () => {
     setIsExporting(true);
 
     try {
-      const residentProfile = getResidentProfile();
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
@@ -110,10 +167,10 @@ const useResidentReportsPage = () => {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8.5);
       doc.setTextColor(...colors.muted);
-      doc.text(`Name: ${residentProfile.name}`, margin + 3, 54);
-      doc.text(`Flat: ${residentProfile.flatNo} | Block: ${residentProfile.wing}`, margin + 3, 59);
-      doc.text(`Email: ${residentProfile.email}`, margin + 3, 64);
-      doc.text(`Phone: ${residentProfile.phone}`, pageWidth - margin - 3, 54, { align: 'right' });
+      doc.text(`Name: ${profile.name || 'Not provided'}`, margin + 3, 54);
+      doc.text(`Flat: ${profile.flatNo || 'Not provided'} | Block: ${profile.wing || 'Not provided'}`, margin + 3, 59);
+      doc.text(`Email: ${profile.email || 'Not provided'}`, margin + 3, 64);
+      doc.text(`Phone: ${profile.phone || 'Not provided'}`, pageWidth - margin - 3, 54, { align: 'right' });
 
       const filteredPayments = getFilteredPayments();
       const filteredReceipts = getFilteredReceipts();
@@ -216,7 +273,7 @@ const useResidentReportsPage = () => {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8.5);
         doc.setTextColor(...colors.muted);
-        doc.text(`${residentProfile.name}  |  Payment summary`, margin, 26);
+        doc.text(`${profile.name || 'Resident'}  |  Payment summary`, margin, 26);
         doc.setDrawColor(...colors.line);
         doc.line(margin, 30, pageWidth - margin, 30);
       }
@@ -287,7 +344,6 @@ const useResidentReportsPage = () => {
     setIsExporting(true);
 
     try {
-      const residentProfile = getResidentProfile();
       const workbook = new ExcelJS.Workbook();
       const generatedAt = new Date();
       
@@ -303,35 +359,47 @@ const useResidentReportsPage = () => {
       };
 
       const currencyFormat = '₹#,##0;[Red]-₹#,##0';
+      const reportTitle = reportTypes.find((type) => type.value === filters.reportType)?.label || 'Payment Statement';
+      const lastColumn = filters.reportType === 'yearly' ? 'E' : 'F';
+      const isReceiptReport = filters.reportType === 'receipts';
+      const isYearlyReport = filters.reportType === 'yearly';
 
       workbook.creator = 'SocietyVault';
       workbook.created = generatedAt;
-      workbook.title = `${residentProfile.name} - Payment Statement`;
+      workbook.title = `${profile.name || 'Resident'} - ${reportTitle}`;
 
-      const sheet = workbook.addWorksheet('Payment Statement', {
+      const sheet = workbook.addWorksheet(reportTitle, {
         views: [{ state: 'frozen', ySplit: 7, showGridLines: false, zoomScale: 90 }],
         pageSetup: { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1 }
       });
 
-      sheet.columns = [
-        { key: 'date', width: 16 },
-        { key: 'month', width: 20 },
-        { key: 'category', width: 20 },
-        { key: 'mode', width: 18 },
-        { key: 'amount', width: 16 },
-        { key: 'status', width: 14 }
-      ];
+      sheet.columns = isYearlyReport
+        ? [
+          { key: 'year', width: 14 },
+          { key: 'payments', width: 18 },
+          { key: 'completed', width: 18 },
+          { key: 'paid', width: 20 },
+          { key: 'pending', width: 20 },
+        ]
+        : [
+          { key: 'date', width: 16 },
+          ...(isReceiptReport ? [{ key: 'receipt', width: 24 }] : [{ key: 'month', width: 20 }]),
+          { key: 'category', width: 20 },
+          { key: 'mode', width: 18 },
+          { key: 'amount', width: 16 },
+          ...(!isReceiptReport ? [{ key: 'status', width: 14 }] : []),
+        ];
 
       // Title
-      sheet.mergeCells('A1:F1');
+      sheet.mergeCells(`A1:${lastColumn}1`);
       const titleCell = sheet.getCell('A1');
-      titleCell.value = `SocietyVault | Payment Statement`;
+      titleCell.value = `SocietyVault | ${reportTitle}`;
       titleCell.font = { name: 'Aptos Display', size: 22, bold: true, color: { argb: palette.purple } };
       titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
       sheet.getRow(1).height = 38;
 
       // Subtitle
-      sheet.mergeCells('A2:F2');
+      sheet.mergeCells(`A2:${lastColumn}2`);
       const subtitleCell = sheet.getCell('A2');
       const dateRange = filters.dateFrom && filters.dateTo
         ? `${format(new Date(filters.dateFrom), 'MMM dd, yyyy')} - ${format(new Date(filters.dateTo), 'MMM dd, yyyy')}`
@@ -342,9 +410,9 @@ const useResidentReportsPage = () => {
       sheet.getRow(2).height = 23;
 
       // Resident Info
-      sheet.mergeCells('A4:F4');
+      sheet.mergeCells(`A4:${lastColumn}4`);
       const infoCell = sheet.getCell('A4');
-      infoCell.value = `${residentProfile.name} | Flat: ${residentProfile.flatNo} | ${residentProfile.email}`;
+      infoCell.value = `${profile.name || 'Resident'} | Flat: ${profile.flatNo || 'Not provided'} | ${profile.email || 'Not provided'}`;
       infoCell.font = { name: 'Aptos', size: 10, bold: true, color: { argb: palette.ink } };
       infoCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: palette.surface } };
       infoCell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
@@ -352,7 +420,25 @@ const useResidentReportsPage = () => {
 
       // Table Header
       const headerRow = sheet.getRow(6);
-      headerRow.values = ['Date', 'Month', 'Category', 'Payment Mode', 'Amount (₹)', 'Status'];
+      const filteredPayments = getFilteredPayments();
+      const filteredReceipts = getFilteredReceipts();
+      const yearlyTotals = Object.values(filteredPayments.reduce((years, payment) => {
+        const year = format(new Date(`${payment.date}T00:00:00`), 'yyyy');
+        if (!years[year]) years[year] = { year, payments: 0, completed: 0, paid: 0, pending: 0 };
+        years[year].payments += 1;
+        if (payment.status === 'completed') {
+          years[year].completed += 1;
+          years[year].paid += payment.amount;
+        } else {
+          years[year].pending += payment.amount;
+        }
+        return years;
+      }, {}));
+      headerRow.values = isYearlyReport
+        ? ['Year', 'Payments', 'Completed', 'Total Paid (₹)', 'Pending (₹)']
+        : isReceiptReport
+        ? ['Date', 'Receipt No.', 'Month', 'Category', 'Payment Mode', 'Amount (₹)']
+        : ['Date', 'Month', 'Category', 'Payment Mode', 'Amount (₹)', 'Status'];
       headerRow.height = 25;
       headerRow.eachCell((cell) => {
         cell.font = { name: 'Aptos', size: 10, bold: true, color: { argb: palette.white } };
@@ -365,29 +451,47 @@ const useResidentReportsPage = () => {
       });
 
       // Data Rows
-      const filteredPayments = getFilteredPayments();
-      filteredPayments.forEach((payment, index) => {
-        const row = sheet.getRow(7 + index);
-        row.values = [
+      const rows = isYearlyReport
+        ? yearlyTotals.map((year) => [year.year, year.payments, year.completed, year.paid, year.pending])
+        : isReceiptReport
+        ? filteredReceipts.map((receipt) => [
+          new Date(`${receipt.date}T00:00:00`),
+          receipt.id,
+          receipt.month,
+          receipt.category,
+          receipt.paymentMode,
+          receipt.amount,
+        ])
+        : filteredPayments.map((payment) => [
           new Date(`${payment.date}T00:00:00`),
           payment.month,
           payment.category,
           payment.paymentMode,
           payment.amount,
-          payment.status.toUpperCase()
-        ];
+          payment.status.toUpperCase(),
+        ]);
+      rows.forEach((values, index) => {
+        const row = sheet.getRow(7 + index);
+        row.values = values;
         row.height = 23;
 
-        row.getCell(1).numFmt = 'dd mmm yyyy';
-        row.getCell(5).numFmt = currencyFormat;
-        row.getCell(5).alignment = { vertical: 'middle', horizontal: 'right' };
-        row.getCell(6).alignment = { vertical: 'middle', horizontal: 'center' };
-        row.getCell(6).font = {
-          name: 'Aptos',
-          size: 9,
-          bold: true,
-          color: { argb: payment.status === 'completed' ? palette.green : palette.red }
-        };
+        if (!isYearlyReport) row.getCell(1).numFmt = 'dd mmm yyyy';
+        const amountColumn = isYearlyReport ? 4 : isReceiptReport ? 6 : 5;
+        row.getCell(amountColumn).numFmt = currencyFormat;
+        row.getCell(amountColumn).alignment = { vertical: 'middle', horizontal: 'right' };
+        if (isYearlyReport) {
+          row.getCell(5).numFmt = currencyFormat;
+          row.getCell(5).alignment = { vertical: 'middle', horizontal: 'right' };
+        }
+        if (!isYearlyReport && !isReceiptReport) {
+          row.getCell(6).alignment = { vertical: 'middle', horizontal: 'center' };
+          row.getCell(6).font = {
+            name: 'Aptos',
+            size: 9,
+            bold: true,
+            color: { argb: values[5] === 'COMPLETED' ? palette.green : palette.red }
+          };
+        }
 
         if (index % 2 === 0) {
           row.eachCell((cell) => {
@@ -433,7 +537,26 @@ const useResidentReportsPage = () => {
   };
 
   
-  return { filters, setFilters, isExporting, reportTypes, handleDownloadReport, handleResetFilters };
+  return {
+    filters,
+    setFilters,
+    isExporting,
+    reportTypes,
+    payments,
+    receipts,
+    reportSummary,
+    isLoading: isLoading || isProfileLoading,
+    error: error || profileError,
+    profile,
+    reload: () => {
+      setIsLoading(true);
+      setError('');
+      setReloadKey((key) => key + 1);
+      reloadProfile();
+    },
+    handleDownloadReport,
+    handleResetFilters,
+  };
 };
 
 export default useResidentReportsPage;

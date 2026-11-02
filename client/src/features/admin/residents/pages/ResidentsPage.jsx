@@ -1,5 +1,4 @@
 import { Plus, Users, AlertCircle, DollarSign, Edit2, Trash2 } from 'lucide-react';
-import { maintenanceDues, paymentHistory, duesSummary } from '../data/mockResidentsData';
 import useResidentsPage from '../hooks/useResidentsPage';
 import ResidentForm from '../components/ResidentForm';
 import { format } from 'date-fns';
@@ -7,7 +6,8 @@ import { adminPrimaryButtonClass } from '../../../../components/ui/actionButtonS
 
 const ResidentsPage = () => {
   const {
-    activeTab, setActiveTab, residents, tabs, showForm, editingResident,
+    activeTab, setActiveTab, residents, maintenanceDues, paymentHistory, duesSummary, tabs, showForm, editingResident,
+    isLoading, error,
     addResident, editResident, deleteResident, closeForm, saveResident, getStatusColor,
   } = useResidentsPage();
   const renderContent = () => {
@@ -41,7 +41,9 @@ const ResidentsPage = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#26262b]">
-                    {residents.map((resident) => (
+                    {residents.length === 0 ? (
+                      <tr><td colSpan="8" className="px-4 py-12 text-center text-sm text-[#94a1b2]">No residents in the database yet.</td></tr>
+                    ) : residents.map((resident) => (
                       <tr key={resident.id} className="hover:bg-[#1e1e22] transition-colors">
                         <td className="px-4 py-3.5 text-sm text-[#fffffe]">{resident.name}</td>
                         <td className="px-4 py-3.5 text-sm text-[#94a1b2] font-mono">{resident.flat}</td>
@@ -136,7 +138,9 @@ const ResidentsPage = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#26262b]">
-                    {maintenanceDues.map((due) => (
+                    {maintenanceDues.length === 0 ? (
+                      <tr><td colSpan="8" className="px-4 py-12 text-center text-sm text-[#94a1b2]">No maintenance dues in the database yet.</td></tr>
+                    ) : maintenanceDues.map((due) => (
                       <tr key={due.id} className="hover:bg-[#1e1e22] transition-colors">
                         <td className="px-4 py-3.5 text-sm text-[#fffffe]">{due.period}</td>
                         <td className="px-4 py-3.5 text-sm text-[#94a1b2] font-mono">{due.flat}</td>
@@ -180,7 +184,9 @@ const ResidentsPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#26262b]">
-                  {paymentHistory.map((payment) => (
+                  {paymentHistory.length === 0 ? (
+                    <tr><td colSpan="7" className="px-4 py-12 text-center text-sm text-[#94a1b2]">No completed payments in the database yet.</td></tr>
+                  ) : paymentHistory.map((payment) => (
                     <tr key={payment.id} className="hover:bg-[#1e1e22] transition-colors">
                       <td className="px-4 py-3.5 text-sm text-[#fffffe]">{format(new Date(payment.paymentDate), 'MMM dd, yyyy')}</td>
                       <td className="px-4 py-3.5 text-sm text-[#fffffe]">{payment.resident}</td>
@@ -222,6 +228,8 @@ const ResidentsPage = () => {
       </div>
 
       {/* Content */}
+      {error && <p role="alert" className="text-sm text-[#f0b2b4]">{error}</p>}
+      {isLoading && <p className="text-sm text-[#94a1b2]">Loading {activeTab}...</p>}
       {renderContent()}
 
       {/* Form Modal */}

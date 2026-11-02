@@ -6,14 +6,14 @@ import User from '../models/User.js';
 import MaintenanceSchedule from '../models/MaintenanceSchedule.js';
 
 const startOfMonth = (date = new Date()) => new Date(date.getFullYear(), date.getMonth(), 1);
-const startOfYear = (date = new Date()) => new Date(date.getFullYear(), 0, 1);
 
 export const getAdminDashboard = async () => {
   const monthStart = startOfMonth();
-  const yearStart = startOfYear();
   const [
     incomeThisMonth,
     expensesThisMonth,
+    lifetimeIncome,
+    lifetimeExpenses,
     incomeByMonth,
     expensesByMonth,
     recentIncome,
@@ -24,6 +24,8 @@ export const getAdminDashboard = async () => {
   ] = await Promise.all([
     Income.aggregate([{ $match: { date: { $gte: monthStart } } }, { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } }]),
     Expense.aggregate([{ $match: { date: { $gte: monthStart }, paymentStatus: { $ne: 'Cancelled' } } }, { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } }]),
+    Income.aggregate([{ $group: { _id: null, total: { $sum: '$amount' } } }]),
+    Expense.aggregate([{ $match: { paymentStatus: { $ne: 'Cancelled' } } }, { $group: { _id: null, total: { $sum: '$amount' } } }]),
     Income.aggregate([
       { $match: { date: { $gte: new Date(monthStart.getFullYear(), monthStart.getMonth() - 5, 1) } } },
       { $group: { _id: { year: { $year: '$date' }, month: { $month: '$date' } }, total: { $sum: '$amount' } } },
@@ -32,8 +34,8 @@ export const getAdminDashboard = async () => {
       { $match: { date: { $gte: new Date(monthStart.getFullYear(), monthStart.getMonth() - 5, 1) }, paymentStatus: { $ne: 'Cancelled' } } },
       { $group: { _id: { year: { $year: '$date' }, month: { $month: '$date' } }, total: { $sum: '$amount' } } },
     ]),
-    Income.find({ date: { $gte: yearStart } }).populate('resident', 'profile.name profile.flatNo profile.wing').sort({ date: -1 }).limit(5).lean(),
-    Expense.find({ date: { $gte: yearStart } }).sort({ date: -1 }).limit(5).lean(),
+    Income.find().populate('resident', 'profile.name profile.flatNo profile.wing').sort({ date: -1 }).limit(5).lean(),
+    Expense.find().sort({ date: -1 }).limit(5).lean(),
     User.countDocuments({ role: 'resident', status: 'active' }),
     MaintenanceDue.aggregate([
       { $match: { status: { $in: ['pending', 'partially_paid'] } } },
@@ -67,6 +69,7 @@ export const getAdminDashboard = async () => {
     stats: {
       totalIncome: income.total,
       totalExpenses: expenses.total,
+      availableFunds: (lifetimeIncome[0]?.total || 0) - (lifetimeExpenses[0]?.total || 0),
       residentsCount,
       pendingDues: pendingDues[0]?.amount || 0,
       incomeCount: income.count,
@@ -75,7 +78,7 @@ export const getAdminDashboard = async () => {
     monthlyData: [...monthlyMap.values()],
     recentTransactions: [
       ...recentIncome.map((item) => ({
-        id: item.id,
+        id: item._id,
         date: item.date,
         type: 'income',
         description: item.description,
@@ -85,7 +88,7 @@ export const getAdminDashboard = async () => {
         flat: [item.resident?.profile?.wing, item.resident?.profile?.flatNo].filter(Boolean).join('-'),
       })),
       ...recentExpenses.map((item) => ({
-        id: item.id,
+        id: item._id,
         date: item.date,
         type: 'expense',
         description: item.description,
@@ -160,8 +163,9 @@ export const getFinancialReports = async () => {
   const [monthlyIncome, expenseBreakdown, detailedIncome, detailedExpenses, totals] = await Promise.all([
     Income.aggregate([
       { $group: { _id: { year: { $year: '$date' }, month: { $month: '$date' } }, amount: { $sum: '$amount' } } },
-      { $sort: { '_id.year': 1, '_id.month': 1 } },
+      { $sort: { '_id.year': -1, '_id.month': -1 } },
       { $limit: 12 },
+      { $sort: { '_id.year': 1, '_id.month': 1 } },
     ]),
     Expense.aggregate([
       { $match: { paymentStatus: { $ne: 'Cancelled' } } },
@@ -189,8 +193,9 @@ export const getFinancialReports = async () => {
   const monthlyExpenses = await Expense.aggregate([
     { $match: { paymentStatus: { $ne: 'Cancelled' } } },
     { $group: { _id: { year: { $year: '$date' }, month: { $month: '$date' } }, amount: { $sum: '$amount' } } },
-    { $sort: { '_id.year': 1, '_id.month': 1 } },
+    { $sort: { '_id.year': -1, '_id.month': -1 } },
     { $limit: 12 },
+    { $sort: { '_id.year': 1, '_id.month': 1 } },
   ]);
   for (const item of monthlyExpenses) {
     const key = `${item._id.year}-${item._id.month}`;
@@ -206,7 +211,7 @@ export const getFinancialReports = async () => {
   }
   const detailedTransactions = [
     ...detailedIncome.map((item) => ({
-      id: item.id,
+      id: item._id,
       date: item.date,
       reference: item.transactionRef,
       description: item.description,
@@ -217,7 +222,7 @@ export const getFinancialReports = async () => {
       flat: [item.resident?.profile?.wing, item.resident?.profile?.flatNo].filter(Boolean).join('-'),
     })),
     ...detailedExpenses.map((item) => ({
-      id: item.id,
+      id: item._id,
       date: item.date,
       reference: item.transactionRef,
       description: item.description,
@@ -235,7 +240,9 @@ export const getFinancialReports = async () => {
       pendingDues: pendingDues[0]?.total || 0,
       period: 'All time',
     },
-    monthlyData: [...monthlyMap.values()].sort((a, b) => a.month.localeCompare(b.month)),
+    monthlyData: [...monthlyMap.entries()]
+      .sort(([first], [second]) => first.localeCompare(second))
+      .map(([, item]) => item),
     expenseBreakdown: expenseBreakdown.map((item) => ({
       category: item._id,
       amount: item.amount,

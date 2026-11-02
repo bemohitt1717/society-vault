@@ -2,7 +2,7 @@ import { Search, Download, FileText, Calendar } from 'lucide-react';
 import { compactDownloadButtonClass, exportActionButtonClass, exportActionIconClass } from '../../../components/ui/actionButtonStyles';
 import useReceiptsTab from '../hooks/useReceiptsTab';
 
-const ReceiptsTab = ({ receipts }) => {
+const ReceiptsTab = ({ receipts, profile }) => {
   const {
     searchTerm,
     setSearchTerm,
@@ -10,7 +10,7 @@ const ReceiptsTab = ({ receipts }) => {
     filteredReceipts,
     handleDownloadReceipt,
     handleDownloadAll,
-  } = useReceiptsTab(receipts);
+  } = useReceiptsTab(receipts, profile);
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('en-IN', {
@@ -127,7 +127,7 @@ const ReceiptsTab = ({ receipts }) => {
             {isExporting ? 'Generating...' : 'Download All Receipts'}
           </button>
           <p className="text-xs text-[#94a1b2] mt-3">
-            Download all {receipts.length} receipts as a ZIP file
+            Download all {receipts.length} receipts as individual PDFs
           </p>
         </div>
 

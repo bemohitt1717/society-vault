@@ -3,8 +3,9 @@ import { useState } from 'react';
 const useDuesTab = (dues, onPayNow) => {
   const [selectedDue, setSelectedDue] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('upi');
-  const totalDue = (dues || []).reduce((sum, due) => sum + due.amount + due.penalty, 0);
-  const selectedAmount = selectedDue ? selectedDue.amount + selectedDue.penalty : 0;
+  const getOutstandingAmount = (due) => Math.max((due.amount || 0) + (due.penalty || 0) - (due.paidAmount || 0), 0);
+  const totalDue = (dues || []).reduce((sum, due) => sum + getOutstandingAmount(due), 0);
+  const selectedAmount = selectedDue ? getOutstandingAmount(selectedDue) : 0;
 
   const getDaysOverdue = (dueDate) => {
     const diffDays = Math.ceil((new Date() - new Date(dueDate)) / (1000 * 60 * 60 * 24));
@@ -16,10 +17,10 @@ const useDuesTab = (dues, onPayNow) => {
     month: 'short',
   });
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!selectedDue) return;
-    onPayNow?.([selectedDue]);
-    setSelectedDue(null);
+    const created = await onPayNow?.([selectedDue], paymentMethod);
+    if (created) setSelectedDue(null);
   };
 
   const handlePayAll = () => {
@@ -41,6 +42,7 @@ const useDuesTab = (dues, onPayNow) => {
     setPaymentMethod,
     totalDue,
     selectedAmount,
+    getOutstandingAmount,
     getDaysOverdue,
     formatDate,
     handlePayment,

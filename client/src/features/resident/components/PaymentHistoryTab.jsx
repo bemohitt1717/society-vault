@@ -16,8 +16,8 @@ const getStatusIcon = (status) => {
   }
 };
 
-const PaymentHistoryTab = ({ payments }) => {
-  const { filters, setFilters, isExporting, filteredPayments, categories, handleResetFilters, handleExportPDF, handleDownloadReceipt, formatDate, handleExportExcel } = usePaymentHistoryTab({ payments });
+const PaymentHistoryTab = ({ payments, profile }) => {
+  const { filters, setFilters, isExporting, filteredPayments, categories, handleResetFilters, handleExportPDF, handleDownloadReceipt, formatDate, handleExportExcel } = usePaymentHistoryTab({ payments, profile });
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useOutletContext } from 'react-router-dom';
-import { incomeStats, incomeTransactions } from '../data/mockIncomeData';
+import { createIncome, deleteIncome, getSettings, listIncome, updateIncome } from '../../../../services/api/adminApi';
+import { getApiErrorMessage } from '../../../../services/api/http';
 
 const initialFilters = {
   search: '',
@@ -10,46 +11,8 @@ const initialFilters = {
   paymentMode: '',
 };
 
-const filterIncomeTransactions = (transactions, filters) => {
-  let filtered = [...transactions];
-
-  if (filters.search.trim()) {
-    const search = filters.search.toLowerCase();
-    filtered = filtered.filter((transaction) =>
-      transaction.description?.toLowerCase().includes(search)
-      || transaction.id?.toLowerCase().includes(search)
-      || transaction.resident?.toLowerCase().includes(search)
-      || transaction.flat?.toLowerCase().includes(search));
-  }
-  if (filters.dateFrom) {
-    filtered = filtered.filter((transaction) => new Date(transaction.date) >= new Date(filters.dateFrom));
-  }
-  if (filters.dateTo) {
-    filtered = filtered.filter((transaction) => new Date(transaction.date) <= new Date(filters.dateTo));
-  }
-  if (filters.category) {
-    filtered = filtered.filter((transaction) => transaction.category === filters.category);
-  }
-  if (filters.paymentMode) {
-    filtered = filtered.filter((transaction) => transaction.paymentMode === filters.paymentMode);
-  }
-
-  return filtered;
-};
-
-const calculateIncomeStats = (transactions, previousStats, isEdit) => {
-  const totalIncome = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
-  const averageAmount = transactions.length ? Math.round(totalIncome / transactions.length) : 0;
-  if (isEdit) {
-    return { ...previousStats, totalIncome, averageAmount };
-  }
-
-  return {
-    totalIncome,
-    transactionCount: transactions.length,
-    averageAmount,
-  };
-};
+const emptyStats = { totalIncome: 0, transactionCount: 0, averageAmount: 0 };
+const pageSize = 20;
 
 const useIncomePage = () => {
   const location = useLocation();
@@ -59,63 +22,152 @@ const useIncomePage = () => {
   const [showDetail, setShowDetail] = useState(false);
   const [editingIncome, setEditingIncome] = useState(null);
   const [viewingIncome, setViewingIncome] = useState(null);
-  const [transactions, setTransactions] = useState(incomeTransactions);
-  const [stats, setStats] = useState(incomeStats);
+  const [transactions, setTransactions] = useState([]);
+  const [stats, setStats] = useState(emptyStats);
+  const [categories, setCategories] = useState([]);
   const [filters, setFilters] = useState(initialFilters);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [settingsError, setSettingsError] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [reloadVersion, setReloadVersion] = useState(0);
+  const [settingsReloadVersion, setSettingsReloadVersion] = useState(0);
 
   const handleAddIncome = useCallback(() => {
+    setActionError('');
     setEditingIncome(null);
     setShowForm(true);
   }, []);
 
   const handleEditIncome = useCallback((income) => {
+    setActionError('');
     setEditingIncome(income);
     setShowForm(true);
   }, []);
 
   const handleViewIncome = useCallback((income) => {
+    setActionError('');
     setViewingIncome(income);
     setShowDetail(true);
   }, []);
 
   const handleCloseForm = useCallback(() => {
+    setActionError('');
     setShowForm(false);
     setEditingIncome(null);
   }, []);
 
   const handleCloseDetail = useCallback(() => {
+    setActionError('');
     setShowDetail(false);
     setViewingIncome(null);
   }, []);
 
-  const handleSaveIncome = useCallback((incomeData) => {
-    const updatedTransactions = editingIncome
-      ? transactions.map((transaction) => transaction.id === editingIncome.id
-        ? { ...transaction, ...incomeData, id: transaction.id }
-        : transaction)
-      : [{
-        ...incomeData,
-        id: `INC-${String(transactions.length + 1).padStart(3, '0')}`,
-      }, ...transactions];
+  const handleSaveIncome = useCallback(async (incomeData) => {
+    setIsSaving(true);
+    setActionError('');
+    try {
+      if (editingIncome) {
+        await updateIncome(editingIncome.id, incomeData);
+      } else {
+        await createIncome(incomeData);
+      }
+      setPage(1);
+      setReloadVersion((version) => version + 1);
+      handleCloseForm();
+      return true;
+    } catch (error) {
+      setActionError(getApiErrorMessage(error));
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [editingIncome, handleCloseForm]);
 
-    setTransactions(updatedTransactions);
-    setStats((currentStats) => calculateIncomeStats(updatedTransactions, currentStats, Boolean(editingIncome)));
-    handleCloseForm();
-  }, [editingIncome, handleCloseForm, transactions]);
+  const handleDeleteIncome = useCallback(async (incomeId) => {
+    setIsDeleting(true);
+    setActionError('');
+    try {
+      await deleteIncome(incomeId);
+      handleCloseDetail();
+      setReloadVersion((version) => version + 1);
+      return true;
+    } catch (error) {
+      setActionError(getApiErrorMessage(error));
+      return false;
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [handleCloseDetail]);
 
-  const handleDeleteIncome = useCallback((incomeId) => {
-    const updatedTransactions = transactions.filter((transaction) => transaction.id !== incomeId);
-    setTransactions(updatedTransactions);
-    setStats((currentStats) => calculateIncomeStats(updatedTransactions, currentStats, false));
-    handleCloseDetail();
-  }, [handleCloseDetail, transactions]);
-
-  const handleClearFilters = useCallback(() => setFilters(initialFilters), []);
+  const handleSetFilters = useCallback((nextFilters) => {
+    setFilters(nextFilters);
+    setPage(1);
+  }, []);
+  const handleClearFilters = useCallback(() => handleSetFilters(initialFilters), [handleSetFilters]);
   const handleDetailEdit = useCallback(() => {
     const incomeToEdit = viewingIncome;
     handleCloseDetail();
     if (incomeToEdit) handleEditIncome(incomeToEdit);
   }, [handleCloseDetail, handleEditIncome, viewingIncome]);
+
+  useEffect(() => {
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      setIsLoading(true);
+      setLoadError('');
+      try {
+        const params = {
+          ...Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== '')),
+          page,
+          limit: pageSize,
+        };
+        const result = await listIncome(params);
+        if (!active) return;
+        const payload = result.data || {};
+        const nextTotalPages = Math.max(result.meta?.pages || 1, 1);
+        if (page > nextTotalPages) {
+          setPage(nextTotalPages);
+          return;
+        }
+        setTransactions((payload.items || []).map((item) => ({
+          ...item,
+          id: item.id || item._id,
+          resident: item.residentName || (typeof item.resident === 'string' ? item.resident : item.resident?.profile?.name) || '',
+        })));
+        setStats({ ...emptyStats, ...(payload.stats || {}) });
+        setTotal(result.meta?.total || 0);
+        setTotalPages(nextTotalPages);
+      } catch (error) {
+        if (active) setLoadError(getApiErrorMessage(error));
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    }, 250);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [filters, page, reloadVersion]);
+
+  useEffect(() => {
+    let active = true;
+    getSettings()
+      .then((settings) => {
+        if (active) setCategories((settings.categories?.income || []).filter((category) => category.active !== false));
+      })
+      .catch((error) => {
+        if (active) setSettingsError(getApiErrorMessage(error));
+      });
+    return () => {
+      active = false;
+    };
+  }, [settingsReloadVersion]);
 
   useEffect(() => {
     if (!location.state?.openAddDialog) return;
@@ -136,10 +188,25 @@ const useIncomePage = () => {
     showDetail,
     editingIncome,
     viewingIncome,
-    transactions: filterIncomeTransactions(transactions, filters),
+    transactions,
     stats,
+    categories,
     filters,
-    setFilters,
+    setFilters: handleSetFilters,
+    page,
+    total,
+    totalPages,
+    isLoading,
+    isSaving,
+    isDeleting,
+    error: loadError || settingsError,
+    actionError,
+    retry: () => {
+      setSettingsError('');
+      setReloadVersion((version) => version + 1);
+      setSettingsReloadVersion((version) => version + 1);
+    },
+    setPage,
     handleAddIncome,
     handleEditIncome,
     handleViewIncome,

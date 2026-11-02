@@ -38,7 +38,6 @@ const useResidentRegistrationForm = ({ account, onComplete }) => {
         ...(!account?.hasPassword ? { password: formData.password } : {}),
       });
     } catch (saveError) {
-      console.error('[Resident profile setup] Save failed:', saveError);
       setError(getApiErrorMessage(saveError));
       setIsSaving(false);
     }

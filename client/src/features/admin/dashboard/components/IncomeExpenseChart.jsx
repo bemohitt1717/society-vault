@@ -9,10 +9,10 @@ const CustomTooltip = ({ active, payload }) => {
       <p className="text-sm text-[#94a1b2] mb-2">{payload[0].payload.month}</p>
       <div className="space-y-1">
         <p className="text-sm text-[#91c7a9] font-medium">
-          Income: ₹{payload[0].value.toLocaleString()}
+          Income: ₹{Number(payload.find((item) => item.dataKey === 'income')?.value || 0).toLocaleString('en-IN')}
         </p>
         <p className="text-sm text-[#d89295] font-medium">
-          Expenses: ₹{payload[1].value.toLocaleString()}
+          Expenses: ₹{Number(payload.find((item) => item.dataKey === 'expenses')?.value || 0).toLocaleString('en-IN')}
         </p>
       </div>
     </div>
@@ -27,7 +27,7 @@ const IncomeExpenseChart = ({ data }) => {
         <p className="text-sm text-[#94a1b2] mt-1">Monthly comparison for last 6 months</p>
       </div>
 
-      <ResponsiveContainer width="100%" height={300}>
+      {data.length ? <ResponsiveContainer width="100%" height={300}>
         <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 0 }} barCategoryGap="20%" barGap={6}>
           <CartesianGrid strokeDasharray="3 3" stroke="#303136" />
           <XAxis 
@@ -52,7 +52,9 @@ const IncomeExpenseChart = ({ data }) => {
           <Bar dataKey="income" fill="#91c7a9" radius={[5, 5, 0, 0]} name="Income" maxBarSize={40} />
           <Bar dataKey="expenses" fill="#d89295" radius={[5, 5, 0, 0]} name="Expenses" maxBarSize={40} />
         </BarChart>
-      </ResponsiveContainer>
+      </ResponsiveContainer> : (
+        <p className="py-12 text-center text-sm text-[#94a1b2]">No income or expense records yet.</p>
+      )}
     </Card>
   );
 };

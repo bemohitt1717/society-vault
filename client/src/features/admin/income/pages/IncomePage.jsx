@@ -1,8 +1,8 @@
-import { Plus, Search, TrendingUp } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import IncomeTable from '../components/IncomeTable';
 import IncomeForm from '../components/IncomeForm';
 import IncomeDetailDrawer from '../components/IncomeDetailDrawer';
-import { incomeCategories, paymentModes } from '../data/mockIncomeData';
+import { paymentModes } from '../data/incomeOptions';
 import useIncomePage from '../hooks/useIncomePage';
 import {
   adminFormFieldClass,
@@ -12,12 +12,20 @@ import {
 
 const IncomePage = () => {
   const {
-    showForm, showDetail, editingIncome, viewingIncome, transactions, stats, filters,
+    showForm, showDetail, editingIncome, viewingIncome, transactions, stats, categories, filters,
     setFilters, handleAddIncome, handleEditIncome, handleViewIncome, handleCloseForm,
     handleCloseDetail, handleSaveIncome, handleDeleteIncome, handleClearFilters, handleDetailEdit,
+    page, total, totalPages, isLoading, isSaving, isDeleting, error, actionError, retry, setPage,
   } = useIncomePage();
   return (
     <div className="space-y-4">
+      {error && (
+        <div role="alert" className="flex items-center justify-between gap-3 rounded-lg border border-[#8d4b4d] bg-[#2c1d20] px-4 py-3 text-sm text-[#f0b2b4]">
+          <span>{error}</span>
+          <button type="button" onClick={retry} className="font-semibold underline">Retry</button>
+        </div>
+      )}
+      {isLoading && <p role="status" className="text-sm text-[#94a1b2]">Loading income records...</p>}
       {/* Top Bar: KPI Cards + Add Button */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         {/* Stats Cards - Fixed width, equal sized */}
@@ -25,12 +33,6 @@ const IncomePage = () => {
           <div className="flex-1 bg-[#1a1a1e] border border-[#26262b] rounded-xl p-2.5 md:p-4 hover:border-[#2e2f33] transition-all duration-300 min-w-0">
             <h2 className="text-lg md:text-2xl font-bold text-[#fffffe] mb-0.5 md:mb-1 truncate">₹{stats.totalIncome.toLocaleString()}</h2>
             <p className="text-[10px] md:text-xs text-[#8b8b90] mb-1 md:mb-2">Total</p>
-            <div className="flex items-center gap-1 md:gap-2">
-              <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-[#2cb67d]/15 flex items-center justify-center flex-shrink-0">
-                <TrendingUp className="w-2.5 h-2.5 md:w-3 md:h-3 text-[#8db5a2]" strokeWidth={2.5} />
-              </div>
-              <span className="text-[10px] md:text-xs font-semibold text-[#8db5a2]">+12.5%</span>
-            </div>
           </div>
 
           <div className="flex-1 bg-[#1a1a1e] border border-[#26262b] rounded-xl p-2.5 md:p-4 hover:border-[#2e2f33] transition-all duration-300 min-w-0">
@@ -62,6 +64,11 @@ const IncomePage = () => {
             transactions={transactions}
             onEdit={handleEditIncome}
             onView={handleViewIncome}
+            isLoading={isLoading}
+            page={page}
+            total={total}
+            totalPages={totalPages}
+            onPageChange={setPage}
           />
         </div>
 
@@ -124,8 +131,8 @@ const IncomePage = () => {
                     className={`${adminFormFieldClass} cursor-pointer`}
                   >
                     <option value="">All</option>
-                    {incomeCategories.map((cat) => (
-                      <option key={cat.id} value={cat.name}>{cat.name}</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id || cat._id} value={cat.name}>{cat.name}</option>
                     ))}
                   </select>
                 </div>
@@ -154,6 +161,9 @@ const IncomePage = () => {
         <IncomeForm
           key={editingIncome?.id || 'new'}
           income={editingIncome}
+          categories={categories}
+          actionError={actionError}
+          isSaving={isSaving}
           onSave={handleSaveIncome}
           onClose={handleCloseForm}
         />
@@ -166,6 +176,8 @@ const IncomePage = () => {
           onClose={handleCloseDetail}
           onEdit={handleDetailEdit}
           onDelete={handleDeleteIncome}
+          error={actionError}
+          isDeleting={isDeleting}
         />
       )}
     </div>

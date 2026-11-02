@@ -64,16 +64,17 @@ export const initiatePayment = async ({ selectedDues, paymentMethod }) => {
     paymentMode: paymentModeToApi[paymentMethod] || paymentMethod,
   })).data.data;
 };
-export const getSocietyFinances = async (params) => (
-  await api.get('/dashboard/resident-finances', { params })
-).then(({ data }) => ({
-  ...data,
-  data: {
-    ...data.data,
-    transactions: data.data.items,
-    recentTransactions: data.data.items,
-  },
-}));
+export const getSocietyFinances = async (params) => {
+  const { data: response } = await api.get('/dashboard/resident-finances', { params });
+  return {
+    ...response,
+    data: {
+      ...response.data,
+      transactions: response.data.items,
+      recentTransactions: response.data.items,
+    },
+  };
+};
 export const getResidentReport = async (params) => (
   await api.get('/dashboard/reports/resident', { params })
 ).data.data;

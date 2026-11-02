@@ -1,14 +1,41 @@
 
 import { Download, FileText, Calendar } from 'lucide-react';
-import { receipts } from "../data/mockResidentData";
 import { exportActionButtonClass, exportActionIconClass, resetFilterButtonClass } from '../../../components/ui/actionButtonStyles';
 import useResidentReportsPage from '../hooks/useResidentReportsPage';
 
 const ResidentReportsPage = () => {
-  const { filters, setFilters, isExporting, reportTypes, handleDownloadReport, handleResetFilters } = useResidentReportsPage();
+  const {
+    filters,
+    setFilters,
+    isExporting,
+    reportTypes,
+    payments,
+    receipts,
+    reportSummary,
+    isLoading,
+    error,
+    reload,
+    handleDownloadReport,
+    handleResetFilters,
+  } = useResidentReportsPage();
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="lg:col-span-12 space-y-3">
+        {isLoading && (
+          <p role="status" className="rounded-lg border border-[#45414f] bg-[#1a1a1e] px-4 py-3 text-sm text-[#d0d3d9]">
+            Loading your report data…
+          </p>
+        )}
+        {error && (
+          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#8b4545] bg-[#2a1c1c] px-4 py-3 text-sm text-[#f1b3b3]">
+            {error}
+            <button type="button" onClick={reload} className="rounded-md border border-[#a45a5a] px-3 py-1.5 font-medium text-white hover:bg-[#402525]">
+              Retry
+            </button>
+          </div>
+        )}
+      </div>
       
       {/* LEFT: Report Preview/Info (70% width) */}
       <div className="lg:col-span-8 space-y-6">
@@ -30,16 +57,16 @@ const ResidentReportsPage = () => {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="p-4 rounded-lg bg-[#242629] border border-[#2e2f33]">
-              <p className="text-xs text-[#c5cad3] mb-1">Total Paid (2026)</p>
-              <p className="text-xl font-bold text-[#fffffe]">₹1,44,000</p>
+              <p className="text-xs text-[#c5cad3] mb-1">Total Paid (selected period)</p>
+              <p className="text-xl font-bold text-[#fffffe]">{isLoading || error ? '—' : `₹${Number(reportSummary.totalPaid || 0).toLocaleString('en-IN')}`}</p>
             </div>
             <div className="p-4 rounded-lg bg-[#242629] border border-[#2e2f33]">
               <p className="text-xs text-[#c5cad3] mb-1">Total Payments</p>
-              <p className="text-xl font-bold text-[#fffffe]">6</p>
+              <p className="text-xl font-bold text-[#fffffe]">{isLoading || error ? '—' : payments.length}</p>
             </div>
             <div className="p-4 rounded-lg bg-[#242629] border border-[#2e2f33]">
               <p className="text-xs text-[#c5cad3] mb-1">Receipts Generated</p>
-              <p className="text-xl font-bold text-[#fffffe]">4</p>
+              <p className="text-xl font-bold text-[#fffffe]">{isLoading || error ? '—' : receipts.length}</p>
             </div>
           </div>
         </div>
@@ -157,7 +184,7 @@ const ResidentReportsPage = () => {
             {/* Download Button */}
             <button
               onClick={handleDownloadReport}
-              disabled={isExporting}
+              disabled={isExporting || isLoading || Boolean(error)}
               className={`${exportActionButtonClass} w-full`}
             >
               <Download className={`w-4 h-4 ${exportActionIconClass}`} />

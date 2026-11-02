@@ -1,7 +1,7 @@
-import { incomeCategories, paymentModes } from '../data/mockIncomeData';
+import { paymentModes } from '../data/incomeOptions';
 import { resetFilterButtonClass } from '../../../../components/ui/actionButtonStyles';
 
-const IncomeFilters = ({ filters, setFilters }) => {
+const IncomeFilters = ({ filters, setFilters, categories = [] }) => {
   const handleClearFilters = () => {
     setFilters({
       search: '',
@@ -43,8 +43,8 @@ const IncomeFilters = ({ filters, setFilters }) => {
             className="w-full px-3 py-2 bg-[#16161a] border border-[#2e2f33] rounded-lg text-[#fffffe] text-sm focus:outline-none focus:border-[#7f5af0] transition-colors cursor-pointer"
           >
             <option value="">All Categories</option>
-            {incomeCategories.map((cat) => (
-              <option key={cat.id} value={cat.name}>{cat.name}</option>
+            {categories.map((cat) => (
+              <option key={cat.id || cat._id} value={cat.name}>{cat.name}</option>
             ))}
           </select>
         </div>

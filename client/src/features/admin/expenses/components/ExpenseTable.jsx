@@ -1,7 +1,7 @@
 import { Eye, Edit2, FileText, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
-const ExpenseTable = ({ transactions, onEdit, onView }) => {
+const ExpenseTable = ({ transactions, onEdit, onView, isLoading, page, total, totalPages, onPageChange }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'Paid':
@@ -39,8 +39,8 @@ const ExpenseTable = ({ transactions, onEdit, onView }) => {
               <tr>
                 <td colSpan="9" className="px-4 py-12 text-center">
                   <div className="flex flex-col items-center gap-2">
-                    <p className="text-sm text-[#94a1b2]">No expenses found</p>
-                    <p className="text-xs text-[#6b6b70]">Try adjusting your filters</p>
+                    <p className="text-sm text-[#94a1b2]">{isLoading ? 'Loading expenses...' : 'No expenses found'}</p>
+                    {!isLoading && <p className="text-xs text-[#6b6b70]">Try adjusting your filters</p>}
                   </div>
                 </td>
               </tr>
@@ -105,17 +105,15 @@ const ExpenseTable = ({ transactions, onEdit, onView }) => {
       {/* Pagination */}
       <div className="flex items-center justify-between px-4 py-3.5 border-t border-[#26262b]">
         <p className="text-sm text-[#94a1b2]">
-          Showing <span className="font-medium text-[#fffffe]">1-{Math.min(transactions.length, 8)}</span> of{' '}
-          <span className="font-medium text-[#fffffe]">{transactions.length}</span> {transactions.length === 1 ? 'expense' : 'expenses'}
+          Showing <span className="font-medium text-[#fffffe]">{total ? `${(page - 1) * 20 + 1}-${Math.min(page * 20, total)}` : '0'}</span> of{' '}
+          <span className="font-medium text-[#fffffe]">{total}</span> {total === 1 ? 'expense' : 'expenses'}
         </p>
         <div className="flex gap-2">
-          <button className="px-3 py-1.5 text-sm border border-[#3b3d42] hover:border-[#55575e] rounded-lg text-[#b8bec8] hover:text-[#f4f4f5] transition-colors cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a5a7ad]">
+          <button disabled={page <= 1 || isLoading} onClick={() => onPageChange(page - 1)} className="px-3 py-1.5 text-sm border border-[#3b3d42] hover:border-[#55575e] rounded-lg text-[#b8bec8] hover:text-[#f4f4f5] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
             Previous
           </button>
-          <button className="px-3 py-1.5 text-sm bg-[#5c5197] text-white rounded-lg cursor-pointer">
-            1
-          </button>
-          <button className="px-3 py-1.5 text-sm border border-[#3b3d42] hover:border-[#55575e] rounded-lg text-[#b8bec8] hover:text-[#f4f4f5] transition-colors cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a5a7ad]">
+          <span className="px-3 py-1.5 text-sm text-[#fffffe]" aria-current="page">{page} / {totalPages}</span>
+          <button disabled={page >= totalPages || isLoading} onClick={() => onPageChange(page + 1)} className="px-3 py-1.5 text-sm border border-[#3b3d42] hover:border-[#55575e] rounded-lg text-[#b8bec8] hover:text-[#f4f4f5] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
             Next
           </button>
         </div>

@@ -7,6 +7,7 @@ import {
   dueSchema,
   idParamSchema,
   listQuerySchema,
+  residentDuesByIdSchema,
   residentDuesListSchema,
   residentSchema,
 } from '../validators/commonSchemas.js';
@@ -21,10 +22,11 @@ router.get('/me/dashboard', authorize('resident'), residentController.dashboard)
 
 router.use(authorize('admin'));
 router.get('/', validate(residentListSchema), residentController.list);
+router.get('/dues', validate(residentListSchema), residentController.listDuesForAdmin);
 router.post('/', validate(residentSchema), residentController.create);
 router.put('/:id', validate(residentIdSchema), residentController.update);
 router.delete('/:id', validate(idParamSchema), residentController.remove);
-router.get('/:id/dues', validate(residentDuesListSchema), residentController.listAllDues);
+router.get('/:id/dues', validate(residentDuesByIdSchema), residentController.listAllDues);
 router.post('/dues', validate(dueSchema), residentController.createDue);
 
 export default router;

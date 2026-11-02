@@ -1,6 +1,5 @@
 import { Search } from 'lucide-react';
 import AuditTable from '../components/AuditTable';
-import { actionTypes, modules } from '../data/mockAuditData';
 import useAuditLogsPage from '../hooks/useAuditLogsPage';
 import {
   adminFormFieldClass,
@@ -8,7 +7,7 @@ import {
 } from '../../../../components/ui/actionButtonStyles';
 
 const AuditLogsPage = () => {
-  const { filters, setFilters, filteredLogs, clearFilters } = useAuditLogsPage();
+  const { filters, setFilters, filteredLogs, actionTypes, modules, isLoading, error, clearFilters } = useAuditLogsPage();
 
   return (
     <div className="space-y-4">
@@ -16,7 +15,10 @@ const AuditLogsPage = () => {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
         {/* Table - Left Side */}
         <div className="xl:col-span-9">
-          <AuditTable logs={filteredLogs} />
+          {error && <p role="alert" className="mb-3 text-sm text-[#f0b2b4]">{error}</p>}
+          {isLoading
+            ? <p className="py-10 text-center text-sm text-[#94a1b2]">Loading audit logs...</p>
+            : <AuditTable logs={filteredLogs} />}
         </div>
 
         {/* Search & Filters - Right Side */}

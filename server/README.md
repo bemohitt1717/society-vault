@@ -14,6 +14,7 @@ Single-society REST API built with Express, MongoDB/Mongoose, and Firebase Admin
 
 The admin seed command refuses to overwrite an existing administrator. Admin accounts cannot be created through public registration.
 Use `npm run reset:admin-password` after changing `ADMIN_PASSWORD` in the local `.env` to rotate an existing admin password.
+For local UI testing, first create an admin and start the API, then run `npm run seed:sample-data -- --confirm` from `server`. This opt-in command is disabled in production and adds five resident test accounts, dues, past receipts, income, expenses, categories, and one maintenance schedule without overwriting existing fixture records. All five resident accounts use the password `SocietyVault@123` and emails `resident01@societyvault.test` through `resident05@societyvault.test`; these are local test credentials, not real residents.
 
 ## Deployment configuration
 
@@ -34,7 +35,7 @@ All endpoints are prefixed with `/api/v1`. Registration and login endpoints retu
 | Dashboard | `GET /dashboard/admin`, `GET /dashboard/resident-finances`, `GET /dashboard/reports/financial`, `GET /dashboard/reports/resident` |
 | Income | `GET/POST /income`, `PUT/DELETE /income/:id` |
 | Expenses | `GET/POST /expenses`, `PUT/DELETE /expenses/:id` |
-| Residents | `GET/POST /residents`, `PUT/DELETE /residents/:id`, `GET /residents/me/dashboard`, `GET /residents/me/dues`, `GET /residents/:id/dues`, `POST /residents/dues` |
+| Residents | `GET/POST /residents`, `PUT/DELETE /residents/:id`, admin `GET /residents/dues`, `GET /residents/me/dashboard`, `GET /residents/me/dues`, `GET /residents/:id/dues`, `POST /residents/dues` |
 | Payments | `GET /payments/mine`, `GET /payments/receipts`, `GET /payments/report`, `POST /payments/initiate`, admin `GET/POST /payments`, `GET /payments/:id`, `PATCH /payments/:id/status` |
 | Settings | `GET/PUT /settings`, `POST /settings/categories`, `PUT/DELETE /settings/categories/:id` |
 | Audit | `GET /audit-logs` |
