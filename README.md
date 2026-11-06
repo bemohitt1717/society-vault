@@ -2,6 +2,8 @@
 
 SocietyVault is a web application for managing the day-to-day finances and resident records of a housing society. It gives administrators a place to track maintenance dues, payments, income, and expenses, while residents can view their own account and society information.
 
+[**Live Demo →**](https://society-vault.vercel.app/)
+
 This project was built as a full-stack student project to demonstrate authentication, role-based access, CRUD operations, database-backed dashboards, and financial reporting.
 
 ## What the app does
