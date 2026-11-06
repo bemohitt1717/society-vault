@@ -1,6 +1,8 @@
+import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import ResidentSidebar from './ResidentSidebar';
 import Header from '../../../components/ui/Header';
+import LoadingState from '../../../components/ui/LoadingState';
 import useResidentLayout from '../hooks/useResidentLayout';
 
 const ResidentLayout = () => {
@@ -55,7 +57,9 @@ const ResidentLayout = () => {
         />
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <Outlet />
+          <Suspense fallback={<LoadingState fullPage label="Loading section..." />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

@@ -21,6 +21,9 @@ const ResidentsPage = () => {
     retryLoad, openDueForm, openPaymentForm, closeDueForm, closePaymentForm, saveDue, savePayment,
     requestPaymentReview, confirmPaymentReview, cancelPaymentReview,
   } = useResidentsPage();
+
+  if (isLoading) return <LoadingState fullPage label={`Loading ${activeTab}...`} />;
+
   const renderContent = () => {
     switch (activeTab) {
       case 'residents':
@@ -282,8 +285,6 @@ const ResidentsPage = () => {
             Try loading again
           </button>
         </div>
-      ) : isLoading ? (
-        <LoadingState label={`Loading ${activeTab}...`} />
       ) : renderContent()}
 
       {/* Form Modal */}

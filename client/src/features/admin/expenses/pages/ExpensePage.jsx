@@ -18,6 +18,9 @@ const ExpensePage = () => {
     handleCloseDetail, handleSaveExpense, handleDeleteExpense, handleClearFilters, handleDetailEdit,
     page, total, totalPages, isLoading, isSaving, isDeleting, error, actionError, retry, setPage,
   } = useExpensePage();
+
+  if (isLoading) return <LoadingState fullPage label="Loading expense records..." />;
+
   return (
     <div className="space-y-4">
       {error && (
@@ -26,7 +29,6 @@ const ExpensePage = () => {
           <button type="button" onClick={retry} className="font-semibold underline">Retry</button>
         </div>
       )}
-      {isLoading && <LoadingState label="Loading expense records..." className="min-h-20" />}
       {/* Top Bar: KPI Cards + Add Button */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         {/* Stats Cards - Fixed width, equal sized */}

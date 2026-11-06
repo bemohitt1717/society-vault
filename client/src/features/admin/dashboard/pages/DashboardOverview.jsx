@@ -24,7 +24,7 @@ const DashboardOverview = () => {
   }, []);
 
   if (error) return <p role="alert" className="text-sm text-[#f0b2b4]">{error}</p>;
-  if (!dashboard) return <LoadingState label="Loading your dashboard..." />;
+  if (!dashboard) return <LoadingState fullPage label="Loading your dashboard..." />;
 
   const { stats, monthlyData, recentTransactions } = dashboard;
   const formatCurrency = (amount) => `₹${Number(amount || 0).toLocaleString('en-IN')}`;

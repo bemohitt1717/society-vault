@@ -1,6 +1,8 @@
+import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../../../../components/ui/Sidebar';
 import Header from '../../../../components/ui/Header';
+import LoadingState from '../../../../components/ui/LoadingState';
 import useDashboardLayout from '../hooks/useDashboardLayout';
 
 const DashboardLayout = () => {
@@ -57,7 +59,9 @@ const DashboardLayout = () => {
         />
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <Outlet context={{ triggerAddIncome, triggerAddExpense }} />
+          <Suspense fallback={<LoadingState fullPage label="Loading section..." />}>
+            <Outlet context={{ triggerAddIncome, triggerAddExpense }} />
+          </Suspense>
         </main>
       </div>
     </div>

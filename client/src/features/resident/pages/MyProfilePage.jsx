@@ -10,6 +10,9 @@ const DetailRow = ({ label, value }) => (
 
 const MyProfilePage = () => {
   const { profile, isLoading, error, reload } = useResidentProfile();
+
+  if (isLoading) return <LoadingState fullPage label="Loading your profile..." />;
+
   const initials = profile.name
     .split(/\s+/)
     .filter(Boolean)
@@ -20,9 +23,6 @@ const MyProfilePage = () => {
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      {isLoading && (
-        <LoadingState label="Loading your profile..." className="min-h-24" />
-      )}
       {error && (
         <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#8b4545] bg-[#2a1c1c] px-4 py-3 text-sm text-[#f1b3b3]">
           {error}
@@ -42,11 +42,11 @@ const MyProfilePage = () => {
             </div>
             <div className="min-w-0">
               <h2 className="break-words text-lg font-semibold text-[#f4f3f6]">
-                {isLoading ? 'Loading…' : profile.name || 'Resident'}
+                {profile.name || 'Resident'}
               </h2>
               <p className="mt-1 text-sm text-[#b8bac2]">
-                {isLoading ? 'Loading apartment details…' : profile.flatNo ? `Flat ${profile.flatNo}` : 'Resident'}
-                {!isLoading && profile.wing ? ` · Block ${profile.wing}` : ''}
+                {profile.flatNo ? `Flat ${profile.flatNo}` : 'Resident'}
+                {profile.wing ? ` · Block ${profile.wing}` : ''}
               </p>
             </div>
           </div>
@@ -54,7 +54,7 @@ const MyProfilePage = () => {
           <div className="mt-6 border-t border-[#303136] pt-5">
             <p className="text-xs font-medium uppercase tracking-[0.08em] text-[#aeb0b9]">Resident account</p>
             <p className="mt-2 break-all text-sm leading-6 text-[#dedde3]">
-              {isLoading ? 'Loading…' : profile.email || 'Email not provided'}
+              {profile.email || 'Email not provided'}
             </p>
           </div>
         </section>
@@ -66,11 +66,11 @@ const MyProfilePage = () => {
           </div>
 
           <dl>
-            <DetailRow label="Full name" value={isLoading ? 'Loading…' : profile.name} />
-            <DetailRow label="Email address" value={isLoading ? 'Loading…' : profile.email} />
-            <DetailRow label="Phone number" value={isLoading ? 'Loading…' : profile.phone} />
-            <DetailRow label="Flat number" value={isLoading ? 'Loading…' : profile.flatNo} />
-            <DetailRow label="Block" value={isLoading ? 'Loading…' : profile.wing} />
+            <DetailRow label="Full name" value={profile.name} />
+            <DetailRow label="Email address" value={profile.email} />
+            <DetailRow label="Phone number" value={profile.phone} />
+            <DetailRow label="Flat number" value={profile.flatNo} />
+            <DetailRow label="Block" value={profile.wing} />
           </dl>
         </section>
       </div>

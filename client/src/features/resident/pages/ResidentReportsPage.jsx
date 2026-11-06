@@ -20,12 +20,11 @@ const ResidentReportsPage = () => {
     handleResetFilters,
   } = useResidentReportsPage();
 
+  if (isLoading) return <LoadingState fullPage label="Loading your report data..." />;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <div className="lg:col-span-12 space-y-3">
-        {isLoading && (
-          <LoadingState label="Loading your report data..." className="min-h-24" />
-        )}
         {error && (
           <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#8b4545] bg-[#2a1c1c] px-4 py-3 text-sm text-[#f1b3b3]">
             {error}
@@ -57,15 +56,15 @@ const ResidentReportsPage = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="p-4 rounded-lg bg-[#242629] border border-[#2e2f33]">
               <p className="text-xs text-[#c5cad3] mb-1">Total Paid (selected period)</p>
-              <p className="text-xl font-bold text-[#fffffe]">{isLoading || error ? '—' : `₹${Number(reportSummary.totalPaid || 0).toLocaleString('en-IN')}`}</p>
+              <p className="text-xl font-bold text-[#fffffe]">{error ? '—' : `₹${Number(reportSummary.totalPaid || 0).toLocaleString('en-IN')}`}</p>
             </div>
             <div className="p-4 rounded-lg bg-[#242629] border border-[#2e2f33]">
               <p className="text-xs text-[#c5cad3] mb-1">Total Payments</p>
-              <p className="text-xl font-bold text-[#fffffe]">{isLoading || error ? '—' : payments.length}</p>
+              <p className="text-xl font-bold text-[#fffffe]">{error ? '—' : payments.length}</p>
             </div>
             <div className="p-4 rounded-lg bg-[#242629] border border-[#2e2f33]">
               <p className="text-xs text-[#c5cad3] mb-1">Receipts Generated</p>
-              <p className="text-xl font-bold text-[#fffffe]">{isLoading || error ? '—' : receipts.length}</p>
+              <p className="text-xl font-bold text-[#fffffe]">{error ? '—' : receipts.length}</p>
             </div>
           </div>
         </div>
@@ -183,7 +182,7 @@ const ResidentReportsPage = () => {
             {/* Download Button */}
             <button
               onClick={handleDownloadReport}
-              disabled={isExporting || isLoading || Boolean(error)}
+              disabled={isExporting || Boolean(error)}
               className={`${exportActionButtonClass} w-full`}
             >
               <Download className={`w-4 h-4 ${exportActionIconClass}`} />

@@ -8,11 +8,10 @@ const SocietyFinancesPage = () => {
   const { stats, transactions, filters, setFilters, isExporting, isLoading, error, reload, filteredTransactions, formatDate, handleResetFilters, handleExportExcel } = useSocietyFinancesPage();
   const hasActiveFilters = Boolean(filters.search.trim() || filters.dateFrom || filters.dateTo || filters.type);
 
+  if (isLoading) return <LoadingState fullPage label="Loading society finances..." />;
+
   return (
     <div className="space-y-6">
-      {isLoading && (
-        <LoadingState label="Loading society finances..." className="min-h-24" />
-      )}
       {error && (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#8b4545] bg-[#2a1c1c] px-4 py-3 text-sm text-[#f1b3b3]">
           <span>{error}</span>
@@ -27,7 +26,7 @@ const SocietyFinancesPage = () => {
         <div className="bg-[#1a1a1e] border border-[#26262b] rounded-xl p-2.5 md:p-4 hover:border-[#2e2f33] transition-all duration-300 min-w-0">
           <div className="space-y-1 md:space-y-2">
             <h2 className="text-lg md:text-2xl font-bold text-[#fffffe] tracking-tight leading-none truncate">
-              {isLoading || error ? '—' : `₹${stats.totalIncome.toLocaleString()}`}
+              {error ? '—' : `₹${stats.totalIncome.toLocaleString()}`}
             </h2>
             <p className="text-[10px] md:text-xs text-[#8b8b90] font-medium truncate" title="Total Income">
               Total Income
@@ -44,7 +43,7 @@ const SocietyFinancesPage = () => {
         <div className="bg-[#1a1a1e] border border-[#26262b] rounded-xl p-2.5 md:p-4 hover:border-[#2e2f33] transition-all duration-300 min-w-0">
           <div className="space-y-1 md:space-y-2">
             <h2 className="text-lg md:text-2xl font-bold text-[#fffffe] tracking-tight leading-none truncate">
-              {isLoading || error ? '—' : `₹${stats.totalExpenses.toLocaleString()}`}
+              {error ? '—' : `₹${stats.totalExpenses.toLocaleString()}`}
             </h2>
             <p className="text-[10px] md:text-xs text-[#8b8b90] font-medium truncate" title="Total Expenses">
               Total Expenses
@@ -61,7 +60,7 @@ const SocietyFinancesPage = () => {
         <div className="bg-[#1a1a1e] border border-[#26262b] rounded-xl p-2.5 md:p-4 hover:border-[#2e2f33] transition-all duration-300 min-w-0">
           <div className="space-y-1 md:space-y-2">
             <h2 className="text-lg md:text-2xl font-bold text-[#fffffe] tracking-tight leading-none truncate">
-              {isLoading || error ? '—' : `₹${stats.availableFunds.toLocaleString()}`}
+              {error ? '—' : `₹${stats.availableFunds.toLocaleString()}`}
             </h2>
             <p className="text-[10px] md:text-xs text-[#8b8b90] font-medium truncate" title="Available Funds">
               Available Funds
@@ -78,7 +77,7 @@ const SocietyFinancesPage = () => {
         <div className="bg-[#1a1a1e] border border-[#26262b] rounded-xl p-2.5 md:p-4 hover:border-[#2e2f33] transition-all duration-300 min-w-0">
           <div className="space-y-1 md:space-y-2">
             <h2 className="text-lg md:text-2xl font-bold text-[#fffffe] tracking-tight leading-none truncate">
-              {isLoading || error ? '—' : `${stats.collectionRate}%`}
+              {error ? '—' : `${stats.collectionRate}%`}
             </h2>
             <p className="text-[10px] md:text-xs text-[#8b8b90] font-medium truncate" title="Collection Rate">
               Collection Rate
@@ -98,22 +97,20 @@ const SocietyFinancesPage = () => {
         
         {/* LEFT: Transactions Table (70% width) */}
         <div className="lg:col-span-8">
-          {isLoading || error || filteredTransactions.length === 0 ? (
+          {error || filteredTransactions.length === 0 ? (
             <div className="bg-[#1a1a1e] border border-[#26262b] rounded-xl p-8 text-center">
               <Filter className="w-12 h-12 mx-auto mb-4 text-[#94a1b2]" />
               <h3 className="text-lg font-semibold text-[#fffffe] mb-2">
-                {isLoading ? 'Loading Transactions' : error ? 'Transactions Unavailable' : hasActiveFilters ? 'No Matching Transactions' : 'No Transactions Yet'}
+                {error ? 'Transactions Unavailable' : hasActiveFilters ? 'No Matching Transactions' : 'No Transactions Yet'}
               </h3>
               <p className="text-sm text-[#94a1b2]">
-                {isLoading
-                  ? 'Transactions are being loaded from the society records.'
-                  : error
-                    ? 'Retry the request to load society transactions.'
-                    : hasActiveFilters
-                      ? 'No transactions match these filters. Try changing your search or filters.'
-                      : 'Society income and expenses will appear here after an administrator adds them.'}
+                {error
+                  ? 'Retry the request to load society transactions.'
+                  : hasActiveFilters
+                    ? 'No transactions match these filters. Try changing your search or filters.'
+                    : 'Society income and expenses will appear here after an administrator adds them.'}
               </p>
-              {!isLoading && !error && hasActiveFilters && (
+              {!error && hasActiveFilters && (
                 <button
                   type="button"
                   onClick={handleResetFilters}
@@ -228,7 +225,7 @@ const SocietyFinancesPage = () => {
             <h3 className="text-base font-semibold text-[#fffffe] mb-4">Export Data</h3>
             <button
               onClick={handleExportExcel}
-              disabled={isExporting || isLoading || Boolean(error) || filteredTransactions.length === 0}
+              disabled={isExporting || Boolean(error) || filteredTransactions.length === 0}
               className={`${exportActionButtonClass} w-full`}
             >
               <FileSpreadsheet className={`w-4 h-4 ${exportActionIconClass}`} />

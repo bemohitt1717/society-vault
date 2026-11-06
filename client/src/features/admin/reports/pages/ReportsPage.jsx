@@ -19,7 +19,7 @@ const ReportsPage = () => {
     handleExportPDF, handleExportExcel,
   } = useReportsPage();
 
-  if (isLoading) return <LoadingState label="Loading financial report..." />;
+  if (isLoading) return <LoadingState fullPage label="Loading financial report..." />;
   if (error) return <p role="alert" className="text-sm text-[#f0b2b4]">{error}</p>;
 
   return (

@@ -10,6 +10,8 @@ import LoadingState from '../../../../components/ui/LoadingState';
 const AuditLogsPage = () => {
   const { filters, setFilters, filteredLogs, actionTypes, modules, isLoading, error, clearFilters } = useAuditLogsPage();
 
+  if (isLoading) return <LoadingState fullPage label="Loading audit logs..." />;
+
   return (
     <div className="space-y-4">
       {/* Table + Filters Layout */}
@@ -17,9 +19,7 @@ const AuditLogsPage = () => {
         {/* Table - Left Side */}
         <div className="xl:col-span-9">
           {error && <p role="alert" className="mb-3 text-sm text-[#f0b2b4]">{error}</p>}
-          {isLoading
-            ? <LoadingState label="Loading audit logs..." />
-            : <AuditTable logs={filteredLogs} />}
+          <AuditTable logs={filteredLogs} />
         </div>
 
         {/* Search & Filters - Right Side */}

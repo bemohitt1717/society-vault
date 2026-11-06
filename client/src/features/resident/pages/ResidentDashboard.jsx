@@ -7,11 +7,10 @@ import LoadingState from '../../../components/ui/LoadingState';
 const ResidentDashboard = () => {
   const { stats, recentPayments, maintenance, isLoading, error, reload, viewAllPayments } = useResidentDashboard();
 
+  if (isLoading) return <LoadingState fullPage label="Loading your dashboard..." />;
+
   return (
     <div className="space-y-6">
-      {isLoading && (
-        <LoadingState label="Loading your dashboard..." />
-      )}
       {error && (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#8b4545] bg-[#2a1c1c] px-4 py-3 text-sm text-[#f1b3b3]">
           <span>{error}</span>
@@ -20,7 +19,7 @@ const ResidentDashboard = () => {
           </button>
         </div>
       )}
-      {!isLoading && !error && (
+      {!error && (
         <>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 md:gap-6">
         <div className="min-w-0 rounded-xl border border-[#26262b] bg-[#1a1a1e] p-2.5 transition-colors duration-200 hover:border-[#35363b] md:p-4">

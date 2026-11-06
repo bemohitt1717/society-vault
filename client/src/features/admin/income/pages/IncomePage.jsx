@@ -18,6 +18,9 @@ const IncomePage = () => {
     handleCloseDetail, handleSaveIncome, handleDeleteIncome, handleClearFilters, handleDetailEdit,
     page, total, totalPages, isLoading, isSaving, isDeleting, error, actionError, retry, setPage,
   } = useIncomePage();
+
+  if (isLoading) return <LoadingState fullPage label="Loading income records..." />;
+
   return (
     <div className="space-y-4">
       {error && (
@@ -26,7 +29,6 @@ const IncomePage = () => {
           <button type="button" onClick={retry} className="font-semibold underline">Retry</button>
         </div>
       )}
-      {isLoading && <LoadingState label="Loading income records..." className="min-h-20" />}
       {/* Top Bar: KPI Cards + Add Button */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         {/* Stats Cards - Fixed width, equal sized */}

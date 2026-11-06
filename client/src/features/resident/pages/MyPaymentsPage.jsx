@@ -21,6 +21,8 @@ const MyPaymentsPage = () => {
     reload,
   } = useMyPaymentsPage();
 
+  if (isLoading) return <LoadingState fullPage label="Loading your payment details..." />;
+
   return (
     <div className="space-y-6">
       {error && (
@@ -74,11 +76,9 @@ const MyPaymentsPage = () => {
 
       {/* Tab Content */}
       <div>
-        {isLoading || error ? (
+        {error ? (
           <div className="rounded-xl border border-[#303136] bg-[#1a1a1e] px-6 py-10 text-center text-sm text-[#aeb4bf]">
-            {isLoading
-              ? <LoadingState label="Loading your payment details..." className="min-h-16" />
-              : 'Payment data is unavailable until the request succeeds.'}
+            Payment data is unavailable until the request succeeds.
           </div>
         ) : (
           <>

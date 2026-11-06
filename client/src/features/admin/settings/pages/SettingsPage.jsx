@@ -26,6 +26,8 @@ const SettingsPage = () => {
     removeCategory,
   } = useSettingsPage();
 
+  if (isLoading) return <LoadingState fullPage label="Loading settings..." />;
+
   const sections = [
     { id: 'society', label: 'Society Details', icon: Building2 },
     { id: 'categories', label: 'Categories', icon: Tag },
@@ -252,7 +254,7 @@ const SettingsPage = () => {
           ))}
         </nav>
         <div className="min-h-64 rounded-2xl border border-[#26262b] bg-[#1a1a1e] p-6 lg:col-span-9">
-          {isLoading ? <LoadingState label="Loading settings..." className="min-h-40" /> : renderContent()}
+          {renderContent()}
         </div>
       </div>
     </div>
