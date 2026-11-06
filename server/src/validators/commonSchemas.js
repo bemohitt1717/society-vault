@@ -5,6 +5,14 @@ const date = z.coerce.date();
 const email = z.string().trim().email().max(254);
 const paymentMode = z.enum(['Cash', 'Bank Transfer', 'UPI', 'Cheque', 'Card']);
 
+const residentProfile = z.object({
+  name: z.string().trim().min(1).max(120),
+  phone: z.string().trim().min(7).max(30),
+  flatNo: z.string().trim().min(1).max(30),
+  wing: z.string().trim().max(30).optional().default(''),
+  type: z.enum(['Owner', 'Tenant']).default('Owner'),
+});
+
 export const registerSchema = z.object({
   body: z.object({
     email,
@@ -25,14 +33,6 @@ export const loginSchema = z.object({
 
 export const googleLoginSchema = z.object({
   body: z.object({ idToken: z.string().min(1) }),
-});
-
-const residentProfile = z.object({
-  name: z.string().trim().min(1).max(120),
-  phone: z.string().trim().min(7).max(30),
-  flatNo: z.string().trim().min(1).max(30),
-  wing: z.string().trim().max(30).optional().default(''),
-  type: z.enum(['Owner', 'Tenant']).default('Owner'),
 });
 
 export const accountProfileSchema = z.object({

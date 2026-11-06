@@ -2,6 +2,7 @@
 import { Download, FileText, Calendar } from 'lucide-react';
 import { exportActionButtonClass, exportActionIconClass, resetFilterButtonClass } from '../../../components/ui/actionButtonStyles';
 import useResidentReportsPage from '../hooks/useResidentReportsPage';
+import LoadingState from '../../../components/ui/LoadingState';
 
 const ResidentReportsPage = () => {
   const {
@@ -23,9 +24,7 @@ const ResidentReportsPage = () => {
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <div className="lg:col-span-12 space-y-3">
         {isLoading && (
-          <p role="status" className="rounded-lg border border-[#45414f] bg-[#1a1a1e] px-4 py-3 text-sm text-[#d0d3d9]">
-            Loading your report data…
-          </p>
+          <LoadingState label="Loading your report data..." className="min-h-24" />
         )}
         {error && (
           <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#8b4545] bg-[#2a1c1c] px-4 py-3 text-sm text-[#f1b3b3]">

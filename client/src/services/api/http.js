@@ -26,6 +26,7 @@ api.interceptors.response.use(
 
 export const setAuthToken = (token) => window.localStorage.setItem(AUTH_TOKEN_KEY, token);
 export const clearAuthToken = () => window.localStorage.removeItem(AUTH_TOKEN_KEY);
+export const hasAuthToken = () => Boolean(window.localStorage.getItem(AUTH_TOKEN_KEY));
 
 export const logApiError = (error, context = 'API request failed') => {
   if (!import.meta.env.DEV) return;

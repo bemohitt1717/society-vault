@@ -183,7 +183,7 @@ export const getFinancialReports = async () => {
   const [incomeTotal, expensesTotal, pendingDues] = totals;
   const totalExpenses = expensesTotal[0]?.total || 0;
   const monthlyMap = new Map(monthlyIncome.map((item) => {
-    const key = `${item._id.year}-${item._id.month}`;
+    const key = `${item._id.year}-${String(item._id.month).padStart(2, '0')}`;
     return [key, {
       month: new Date(item._id.year, item._id.month - 1, 1).toLocaleString('en-IN', { month: 'short', year: '2-digit' }),
       income: item.amount,
@@ -198,7 +198,7 @@ export const getFinancialReports = async () => {
     { $sort: { '_id.year': 1, '_id.month': 1 } },
   ]);
   for (const item of monthlyExpenses) {
-    const key = `${item._id.year}-${item._id.month}`;
+    const key = `${item._id.year}-${String(item._id.month).padStart(2, '0')}`;
     const row = monthlyMap.get(key);
     if (row) row.expenses = item.amount;
     else {

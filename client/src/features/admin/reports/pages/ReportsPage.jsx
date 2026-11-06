@@ -7,10 +7,11 @@ import {
   exportActionButtonClass,
   exportActionIconClass,
 } from '../../../../components/ui/actionButtonStyles';
+import LoadingState from '../../../../components/ui/LoadingState';
 
 import useReportsPage from '../hooks/useReportsPage';
 
-const expenseChartColors = ['#d7b778', '#aa9dcc', '#d88d8e', '#83b2c5', '#89c4a5'];
+const expenseChartColors = ['#ffc857', '#aa8cff', '#ff6482', '#42d4f4', '#38d9a9'];
 
 const ReportsPage = () => {
   const {
@@ -18,7 +19,7 @@ const ReportsPage = () => {
     handleExportPDF, handleExportExcel,
   } = useReportsPage();
 
-  if (isLoading) return <p className="text-sm text-[#94a1b2]">Loading financial report...</p>;
+  if (isLoading) return <LoadingState label="Loading financial report..." />;
   if (error) return <p role="alert" className="text-sm text-[#f0b2b4]">{error}</p>;
 
   return (
@@ -79,8 +80,8 @@ const ReportsPage = () => {
                     labelStyle={{ color: '#fffffe' }}
                   />
                   <Legend wrapperStyle={{ color: '#b8bec8', fontSize: '13px' }} />
-                  <Bar dataKey="income" fill="#91c7a9" radius={[5, 5, 0, 0]} />
-                  <Bar dataKey="expenses" fill="#d89295" radius={[5, 5, 0, 0]} />
+                  <Bar dataKey="income" fill="#18c98b" radius={[5, 5, 0, 0]} />
+                  <Bar dataKey="expenses" fill="#f65370" radius={[5, 5, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer> : <p className="py-12 text-center text-sm text-[#94a1b2]">No financial records yet.</p>}
             </div>
@@ -100,7 +101,7 @@ const ReportsPage = () => {
                     dataKey="amount"
                   >
                     {expenseBreakdown.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={expenseChartColors[index] ?? entry.color} />
+                      <Cell key={`cell-${index}`} fill={expenseChartColors[index % expenseChartColors.length]} />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -114,7 +115,7 @@ const ReportsPage = () => {
                   <div key={item.category} className="flex items-center gap-2">
                     <div
                       className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: expenseChartColors[index] ?? item.color }}
+                      style={{ backgroundColor: expenseChartColors[index % expenseChartColors.length] }}
                     />
                     <span className="text-xs text-[#94a1b2]">{item.category}</span>
                   </div>

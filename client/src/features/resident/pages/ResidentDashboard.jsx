@@ -2,6 +2,7 @@ import { ArrowRight, CreditCard, FileText, TrendingUp, Wallet } from 'lucide-rea
 import RecentPaymentsTable from '../components/RecentPaymentsTable';
 import UpcomingMaintenanceCard from '../components/UpcomingMaintenanceCard';
 import useResidentDashboard from '../hooks/useResidentDashboard';
+import LoadingState from '../../../components/ui/LoadingState';
 
 const ResidentDashboard = () => {
   const { stats, recentPayments, maintenance, isLoading, error, reload, viewAllPayments } = useResidentDashboard();
@@ -9,9 +10,7 @@ const ResidentDashboard = () => {
   return (
     <div className="space-y-6">
       {isLoading && (
-        <p role="status" className="rounded-lg border border-[#45414f] bg-[#1a1a1e] px-4 py-3 text-sm text-[#d0d3d9]">
-          Loading your dashboard…
-        </p>
+        <LoadingState label="Loading your dashboard..." />
       )}
       {error && (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#8b4545] bg-[#2a1c1c] px-4 py-3 text-sm text-[#f1b3b3]">

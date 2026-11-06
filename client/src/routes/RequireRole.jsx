@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, Outlet } from 'react-router-dom';
 import { getCurrentUser } from '../features/auth/services/authService';
+import { getApiErrorMessage } from '../services/api/http';
+import ErrorToast from '../components/ui/ErrorToast';
+import LoadingState from '../components/ui/LoadingState';
 
 const RequireRole = ({ role }) => {
   const [check, setCheck] = useState({ status: 'loading', user: null, error: '' });
@@ -13,7 +16,7 @@ const RequireRole = ({ role }) => {
         if (active) setCheck({ status: user ? 'ready' : 'unauthenticated', user, error: '' });
       })
       .catch((error) => {
-        if (active) setCheck({ status: 'error', user: null, error: error.message || 'Could not verify your session.' });
+        if (active) setCheck({ status: 'error', user: null, error: getApiErrorMessage(error, 'Session verification') });
       });
 
     return () => {
@@ -22,13 +25,16 @@ const RequireRole = ({ role }) => {
   }, [attempt]);
 
   if (check.status === 'loading') {
-    return <p className="p-8 text-sm text-[#94a1b2]">Verifying your session...</p>;
+    return <LoadingState label="Verifying your session..." className="min-h-screen" />;
   }
   if (check.status === 'error') {
     return (
       <main className="grid min-h-screen place-items-center bg-[#16161a] px-6 text-center">
         <div>
-          <p role="alert" className="mb-4 text-sm text-[#f0b2b4]">{check.error}</p>
+          <ErrorToast
+            message={check.error}
+            onDismiss={() => setCheck((current) => ({ ...current, error: '' }))}
+          />
           <button
             type="button"
             onClick={() => setAttempt((value) => value + 1)}
@@ -42,6 +48,12 @@ const RequireRole = ({ role }) => {
     );
   }
   if (check.status === 'unauthenticated') return <Navigate to="/" replace />;
+  if (
+    role === 'resident'
+    && (!check.user.profileComplete || !check.user.profile)
+  ) {
+    return <Navigate to="/" replace />;
+  }
   if (check.user.role !== role) {
     return <Navigate to={check.user.role === 'admin' ? '/dashboard' : '/resident'} replace />;
   }

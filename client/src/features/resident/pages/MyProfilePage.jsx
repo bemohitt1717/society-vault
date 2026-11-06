@@ -1,4 +1,5 @@
 import useResidentProfile from '../hooks/useResidentProfile';
+import LoadingState from '../../../components/ui/LoadingState';
 
 const DetailRow = ({ label, value }) => (
   <div className="grid gap-1 border-b border-[#303136] py-4 last:border-b-0 sm:grid-cols-[minmax(120px,0.7fr)_minmax(0,1.3fr)] sm:gap-6">
@@ -20,9 +21,7 @@ const MyProfilePage = () => {
   return (
     <div className="mx-auto w-full max-w-6xl">
       {isLoading && (
-        <p role="status" className="mb-4 rounded-lg border border-[#45414f] bg-[#1a1a1e] px-4 py-3 text-sm text-[#d0d3d9]">
-          Loading your profile…
-        </p>
+        <LoadingState label="Loading your profile..." className="min-h-24" />
       )}
       {error && (
         <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#8b4545] bg-[#2a1c1c] px-4 py-3 text-sm text-[#f1b3b3]">

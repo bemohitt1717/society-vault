@@ -3,6 +3,7 @@ import api from './http';
 const toResidentPayload = (data) => {
   const [wing = '', ...flatParts] = (data.flat || '').split('-');
   const flatNo = flatParts.join('-');
+  const maintenanceAmount = Number(data.maintenanceAmount);
   return {
     email: data.email,
     profile: {
@@ -11,27 +12,42 @@ const toResidentPayload = (data) => {
       wing: flatNo ? wing : '',
       flatNo: flatNo || data.flat || '',
       type: data.type,
-      maintenanceAmount: Number(data.maintenanceAmount) || 0,
+      maintenanceAmount: Number.isFinite(maintenanceAmount) ? maintenanceAmount : 0,
       membershipStatus: data.status || 'Active',
     },
   };
 };
 
-const fromResident = (resident) => ({
-  ...resident,
-  id: resident.id || resident._id,
-  name: resident.profile?.name || '',
-  flat: [resident.profile?.wing, resident.profile?.flatNo].filter(Boolean).join('-'),
-  type: resident.profile?.type || 'Owner',
-  contact: resident.profile?.phone || '',
-  maintenanceAmount: resident.profile?.maintenanceAmount || 0,
-  status: resident.profile?.membershipStatus || (resident.status === 'disabled' ? 'Inactive' : 'Active'),
-});
+const toAmount = (value) => {
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount : 0;
+};
 
-const toIncomePayload = ({ resident, ...data }) => ({
+const fromResident = (resident) => {
+  const profile = resident.profile || {};
+  const flat = profile.wing || profile.flatNo
+    ? [profile.wing, profile.flatNo].filter(Boolean).join('-')
+    : resident.flat || '';
+
+  return {
+    ...resident,
+    id: resident.id || resident._id,
+    accountStatus: resident.status,
+    name: profile.name ?? resident.name ?? '',
+    flat,
+    type: profile.type ?? resident.type ?? 'Owner',
+    contact: profile.phone ?? resident.contact ?? '',
+    maintenanceAmount: toAmount(profile.maintenanceAmount ?? resident.maintenanceAmount),
+    status: profile.membershipStatus ?? (resident.status === 'disabled' ? 'Inactive' : 'Active'),
+    ...(resident.outstanding !== undefined ? { outstanding: toAmount(resident.outstanding) } : {}),
+    ...(resident.totalPaid !== undefined ? { totalPaid: toAmount(resident.totalPaid) } : {}),
+  };
+};
+
+const toIncomePayload = ({ residentId, residentName, ...data }) => ({
   ...data,
-  residentName: typeof resident === 'string' ? resident : '',
-  resident: undefined,
+  resident: residentId || undefined,
+  residentName: residentName || '',
 });
 
 export const getAdminDashboard = async () => (await api.get('/dashboard/admin')).data.data;
@@ -50,7 +66,15 @@ export const listResidents = async (params) => {
   const result = (await api.get('/residents', { params })).data;
   return { ...result, data: result.data.map(fromResident) };
 };
-export const createResident = async (data) => fromResident((await api.post('/residents', toResidentPayload(data))).data.data);
+export const listAllResidents = async () => {
+  const first = await listResidents({ page: 1, limit: 100 });
+  const pages = first.meta?.pages || 1;
+  if (pages <= 1) return first.data;
+  const rest = await Promise.all(
+    Array.from({ length: pages - 1 }, (_, index) => listResidents({ page: index + 2, limit: 100 })),
+  );
+  return [...first.data, ...rest.flatMap((result) => result.data)];
+};
 export const updateResident = async (id, data) => fromResident((await api.put(`/residents/${id}`, toResidentPayload(data))).data.data);
 export const disableResident = async (id) => fromResident((await api.delete(`/residents/${id}`)).data.data);
 export const listResidentDues = async (residentId, params) => (

@@ -9,8 +9,8 @@ import {
   adminSecondaryButtonClass,
 } from '../../../../components/ui/actionButtonStyles';
 
-const IncomeForm = ({ income, categories, actionError, isSaving, onSave, onClose }) => {
-  const { formData, errors, handleChange, handleSubmit } = useIncomeForm(income, onSave);
+const IncomeForm = ({ income, categories, residents, residentsLoading, residentsError, actionError, isSaving, onSave, onClose }) => {
+  const { formData, errors, handleChange, handleResidentChange, handleSubmit } = useIncomeForm(income, residents, onSave);
   return (
     <div className={adminDialogBackdropClass}>
       <div role="dialog" aria-modal="true" aria-labelledby="income-form-title" className={adminDialogPanelClass}>
@@ -135,15 +135,22 @@ const IncomeForm = ({ income, categories, actionError, isSaving, onSave, onClose
 
               <div>
                 <label className="block text-sm font-medium text-[#fffffe] mb-1.5">
-                  Resident Name
+                  Resident (optional)
                 </label>
-                <input
-                  type="text"
-                  value={formData.resident}
-                  onChange={(e) => handleChange('resident', e.target.value)}
-                  className={adminFormFieldClass}
-                  placeholder="Raj Kumar"
-                />
+                <select
+                  value={formData.residentId}
+                  onChange={(e) => handleResidentChange(e.target.value)}
+                  className={`${adminFormFieldClass} cursor-pointer`}
+                  disabled={residentsLoading}
+                >
+                  <option value="">{residentsLoading ? 'Loading residents…' : 'Not linked to a resident'}</option>
+                  {residents.map((resident) => (
+                    <option key={resident.id} value={resident.id}>
+                      {resident.name} · {resident.flat}
+                    </option>
+                  ))}
+                </select>
+                {residentsError && <p role="alert" className="mt-1 text-xs text-[#d59696]">{residentsError}</p>}
               </div>
 
               <div>
@@ -153,9 +160,9 @@ const IncomeForm = ({ income, categories, actionError, isSaving, onSave, onClose
                 <input
                   type="text"
                   value={formData.flat}
-                  onChange={(e) => handleChange('flat', e.target.value)}
-                  className={adminFormFieldClass}
-                  placeholder="A-101"
+                  readOnly
+                  className={`${adminFormFieldClass} opacity-75`}
+                  placeholder="Auto-filled when a resident is selected"
                 />
               </div>
 

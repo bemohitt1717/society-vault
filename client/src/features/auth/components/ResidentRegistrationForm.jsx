@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Building2, Check, Home, KeyRound, Phone, UserRound } from 'lucide-react';
+import { ArrowLeft, Building2, Check, Home, Phone, UserRound } from 'lucide-react';
 import useResidentRegistrationForm from '../hooks/useResidentRegistrationForm';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 
@@ -80,37 +80,22 @@ const ResidentRegistrationForm = ({ account, onComplete, onSignOut }) => {
               </div>
             </div>
           ))}
-        </div>
-
-        {!account?.hasPassword && (
-          <div className="grid grid-cols-1 gap-4 border-t border-[#303136] pt-5 sm:grid-cols-2">
-            {[
-              { name: 'password', label: 'Create password', autoComplete: 'new-password' },
-              { name: 'confirmPassword', label: 'Confirm password', autoComplete: 'new-password' },
-            ].map(({ name, label, autoComplete }) => (
-              <div key={name} className="min-w-0">
-                <label htmlFor={`resident-${name}`} className="mb-1.5 block text-sm font-medium text-[#d9d9de]">
-                  {label}
-                </label>
-                <div className="relative">
-                  <KeyRound aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9b9da7]" strokeWidth={1.8} />
-                  <input
-                    id={`resident-${name}`}
-                    name={name}
-                    type="password"
-                    autoComplete={autoComplete}
-                    minLength={8}
-                    value={formData[name]}
-                    onChange={updateField}
-                    placeholder="At least 8 characters"
-                    required
-                    className={`${fieldClassName} pl-10`}
-                  />
-                </div>
-              </div>
-            ))}
+          <div className="min-w-0">
+            <label htmlFor="resident-type" className="mb-1.5 block text-sm font-medium text-[#d9d9de]">
+              Resident type
+            </label>
+            <select
+              id="resident-type"
+              name="type"
+              value={formData.type}
+              onChange={updateField}
+              className={`${fieldClassName} cursor-pointer`}
+            >
+              <option value="Owner">Owner</option>
+              <option value="Tenant">Tenant</option>
+            </select>
           </div>
-        )}
+        </div>
 
         {error && (
           <p role="alert" className="rounded-lg border border-[#75464a] bg-[#392629] px-3 py-2.5 text-sm text-[#f0b2b4]">

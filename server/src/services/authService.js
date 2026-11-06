@@ -34,26 +34,24 @@ const toPublicUser = (user) => ({
 
 export const registerResident = async ({ email, password }) => {
   const normalizedEmail = email.trim().toLowerCase();
-  const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
   try {
     const invitedResident = await User.findOne({ email: normalizedEmail, role: 'resident', status: 'invited' });
     if (invitedResident) {
-      invitedResident.passwordHash = passwordHash;
+      invitedResident.passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
       invitedResident.status = 'active';
-      invitedResident.profileComplete = Boolean(invitedResident.profile?.name);
+      invitedResident.profileComplete = false;
       await invitedResident.save();
       return invitedResident;
     }
 
-    const user = await User.create({
+    return await User.create({
       email: normalizedEmail,
-      passwordHash,
+      passwordHash: await bcrypt.hash(password, BCRYPT_ROUNDS),
       role: 'resident',
       status: 'active',
       profileComplete: false,
     });
-    return user;
   } catch (error) {
     if (error?.code === 11000) {
       throw new ApiError(409, 'An account with this email already exists. Sign in instead.');
@@ -99,7 +97,7 @@ export const authenticateWithFirebase = async (idToken) => {
   if (user?.status === 'invited' && user.role === 'resident') {
     user.firebaseUid = decoded.uid;
     user.status = 'active';
-    user.profileComplete = Boolean(user.profile?.name);
+    user.profileComplete = false;
   } else if (user && user.status !== 'active') {
     throw new ApiError(403, 'This account is not active.');
   }
@@ -109,6 +107,7 @@ export const authenticateWithFirebase = async (idToken) => {
       email: decoded.email.toLowerCase(),
       firebaseUid: decoded.uid,
       role: 'resident',
+      status: 'active',
       profileComplete: false,
     });
   } else if (!user.firebaseUid) {
@@ -144,7 +143,11 @@ export const updateResidentProfile = async (userId, profile) => {
     throw new ApiError(409, 'This account already has a password. Password changes are not available here.');
   }
 
-  user.profile = residentProfile;
+  user.profile = {
+    ...residentProfile,
+    maintenanceAmount: user.profile?.maintenanceAmount || 0,
+    membershipStatus: user.profile?.membershipStatus || 'Active',
+  };
   user.profileComplete = true;
   await user.save();
   return user;

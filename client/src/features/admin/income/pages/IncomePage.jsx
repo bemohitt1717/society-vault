@@ -9,10 +9,11 @@ import {
   adminPrimaryButtonClass,
   filterActionButtonClass,
 } from '../../../../components/ui/actionButtonStyles';
+import LoadingState from '../../../../components/ui/LoadingState';
 
 const IncomePage = () => {
   const {
-    showForm, showDetail, editingIncome, viewingIncome, transactions, stats, categories, filters,
+    showForm, showDetail, editingIncome, viewingIncome, transactions, stats, categories, residents, residentsLoading, residentsError, filters,
     setFilters, handleAddIncome, handleEditIncome, handleViewIncome, handleCloseForm,
     handleCloseDetail, handleSaveIncome, handleDeleteIncome, handleClearFilters, handleDetailEdit,
     page, total, totalPages, isLoading, isSaving, isDeleting, error, actionError, retry, setPage,
@@ -25,7 +26,7 @@ const IncomePage = () => {
           <button type="button" onClick={retry} className="font-semibold underline">Retry</button>
         </div>
       )}
-      {isLoading && <p role="status" className="text-sm text-[#94a1b2]">Loading income records...</p>}
+      {isLoading && <LoadingState label="Loading income records..." className="min-h-20" />}
       {/* Top Bar: KPI Cards + Add Button */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         {/* Stats Cards - Fixed width, equal sized */}
@@ -162,6 +163,9 @@ const IncomePage = () => {
           key={editingIncome?.id || 'new'}
           income={editingIncome}
           categories={categories}
+          residents={residents}
+          residentsLoading={residentsLoading}
+          residentsError={residentsError}
           actionError={actionError}
           isSaving={isSaving}
           onSave={handleSaveIncome}

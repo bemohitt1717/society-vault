@@ -1,4 +1,4 @@
-import { ArrowLeft, Eye, EyeOff, LockKeyhole, Mail, UserPlus } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react';
 import useResidentSignupForm from '../hooks/useResidentSignupForm';
 import GoogleLoginButton from './GoogleLoginButton';
 
@@ -60,31 +60,10 @@ const ResidentSignupForm = ({ onRegistered, onBack, onSwitchToLogin }) => {
               type="button"
               aria-label={showPasswords ? 'Hide passwords' : 'Show passwords'}
               onClick={() => setShowPasswords((visible) => !visible)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#aeb0b9] transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b9a8ff]"
+              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-[#aeb0b9] transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b9a8ff]"
             >
               {showPasswords ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}
             </button>
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor="resident-signup-confirm-password" className="mb-1.5 block text-sm font-medium text-[#d9d9de]">
-            Confirm password
-          </label>
-          <div className="relative">
-            <LockKeyhole aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9b9da7]" strokeWidth={1.8} />
-            <input
-              id="resident-signup-confirm-password"
-              name="confirmPassword"
-              type={showPasswords ? 'text' : 'password'}
-              autoComplete="new-password"
-              minLength={8}
-              value={formData.confirmPassword}
-              onChange={updateField}
-              placeholder="Re-enter your password"
-              required
-              className={`${fieldClassName} pl-10`}
-            />
           </div>
         </div>
 
@@ -99,8 +78,8 @@ const ResidentSignupForm = ({ onRegistered, onBack, onSwitchToLogin }) => {
           disabled={isLoading}
           className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#7659d9] px-5 text-sm font-semibold text-white transition duration-200 hover:bg-[#8368e2] active:scale-[0.99] disabled:cursor-wait disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b9a8ff]"
         >
-          <UserPlus aria-hidden="true" className="size-[18px]" strokeWidth={1.8} />
-          {isLoading ? 'Creating account...' : 'Create resident account'}
+          <span>{isLoading ? 'Creating account...' : 'Continue'}</span>
+          {!isLoading && <ArrowRight aria-hidden="true" className="size-4" />}
         </button>
       </form>
 
@@ -109,7 +88,7 @@ const ResidentSignupForm = ({ onRegistered, onBack, onSwitchToLogin }) => {
         or sign up with
         <span className="h-px flex-1 bg-[#36373d]" />
       </div>
-      <GoogleLoginButton onAuthenticated={onRegistered} buttonLabel="Sign up with Google" />
+      <GoogleLoginButton onAuthenticated={onRegistered} buttonLabel="Continue with Google" />
 
       <p className="mt-6 text-center text-sm text-[#b8bac2]">
         Already have an account?{' '}

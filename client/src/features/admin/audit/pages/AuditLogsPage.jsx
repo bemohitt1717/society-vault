@@ -5,6 +5,7 @@ import {
   adminFormFieldClass,
   filterActionButtonClass,
 } from '../../../../components/ui/actionButtonStyles';
+import LoadingState from '../../../../components/ui/LoadingState';
 
 const AuditLogsPage = () => {
   const { filters, setFilters, filteredLogs, actionTypes, modules, isLoading, error, clearFilters } = useAuditLogsPage();
@@ -17,7 +18,7 @@ const AuditLogsPage = () => {
         <div className="xl:col-span-9">
           {error && <p role="alert" className="mb-3 text-sm text-[#f0b2b4]">{error}</p>}
           {isLoading
-            ? <p className="py-10 text-center text-sm text-[#94a1b2]">Loading audit logs...</p>
+            ? <LoadingState label="Loading audit logs..." />
             : <AuditTable logs={filteredLogs} />}
         </div>
 

@@ -4,8 +4,10 @@ import RoleSelection from '../components/RoleSelection';
 import ResidentSignupForm from '../components/ResidentSignupForm';
 import ResidentRegistrationForm from '../components/ResidentRegistrationForm';
 import useAuthPage from '../hooks/useAuthPage';
+import ErrorToast from '../../../components/ui/ErrorToast';
+import LoadingState from '../../../components/ui/LoadingState';
 import logoImage from '../../../assets/logo.png';
-import buildingImage from '../../../assets/building.jpg';
+import buildingImage from '../../../assets/building.webp';
 
 const AuthPage = () => {
   const {
@@ -15,6 +17,7 @@ const AuthPage = () => {
     activeUser,
     isCheckingSession,
     restoreError,
+    dismissRestoreError,
     heading,
     subtitle,
     handleRoleSelection,
@@ -79,12 +82,10 @@ const AuthPage = () => {
               transition={{ duration: 0.3, ease: "easeInOut" }}
             >
               {isCheckingSession && (
-                <p className="text-sm text-[#94a1b2]">Checking your session...</p>
+                <LoadingState label="Checking your session..." className="min-h-16 justify-start" />
               )}
               {!isCheckingSession && restoreError && (
-                <p role="alert" className="mb-4 rounded-lg border border-[#75464a] bg-[#392629] px-3 py-2.5 text-sm text-[#f0b2b4]">
-                  {restoreError}
-                </p>
+                <ErrorToast message={restoreError} onDismiss={dismissRestoreError} />
               )}
               {!isCheckingSession && activeView === 'roleSelection' && (
                 <RoleSelection onSelectRole={handleRoleSelection} />

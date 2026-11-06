@@ -14,7 +14,17 @@ Single-society REST API built with Express, MongoDB/Mongoose, and Firebase Admin
 
 The admin seed command refuses to overwrite an existing administrator. Admin accounts cannot be created through public registration.
 Use `npm run reset:admin-password` after changing `ADMIN_PASSWORD` in the local `.env` to rotate an existing admin password.
-For local UI testing, first create an admin and start the API, then run `npm run seed:sample-data -- --confirm` from `server`. This opt-in command is disabled in production and adds five resident test accounts, dues, past receipts, income, expenses, categories, and one maintenance schedule without overwriting existing fixture records. All five resident accounts use the password `SocietyVault@123` and emails `resident01@societyvault.test` through `resident05@societyvault.test`; these are local test credentials, not real residents.
+For UI testing, first create an admin and start the API, then run `npm run seed:sample-data -- --confirm` from `server`. This opt-in command is disabled in production and idempotently adds/refreshes five resident test accounts, five months of paid receipts per resident, current outstanding dues, six months of income/expenses, categories, demo financial settings, and one maintenance schedule. It does not remove unrelated records. Sample income is sized so each month's income covers its expenses. The test accounts use these credentials:
+
+| Name | Email | Password |
+|---|---|---|
+| Geetansh | `geetansh@gmail.com` | `geetansh123` |
+| Sahil | `sahil@gmail.com` | `sahil123` |
+| Shivam | `shivam@gmail.com` | `shivam123` |
+| Ishuu | `ishuu@gmail.com` | `ishuu123` |
+| Dhansikha | `dhansikha@gmail.com` | `dhansikha123` |
+
+These are weak test credentials for a disposable development database only. Never use them for real accounts or production.
 
 ## Deployment configuration
 

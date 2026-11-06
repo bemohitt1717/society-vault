@@ -8,8 +8,7 @@ const useResidentRegistrationForm = ({ account, onComplete }) => {
     phone: account?.profile?.phone || '',
     flatNo: account?.profile?.flatNo || '',
     wing: account?.profile?.wing || '',
-    password: '',
-    confirmPassword: '',
+    type: account?.profile?.type || 'Owner',
   }));
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -23,10 +22,6 @@ const useResidentRegistrationForm = ({ account, onComplete }) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
-    if (!account?.hasPassword && formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match. Check both fields and try again.');
-      return;
-    }
     setIsSaving(true);
     try {
       await onComplete({
@@ -35,7 +30,7 @@ const useResidentRegistrationForm = ({ account, onComplete }) => {
         phone: formData.phone.trim(),
         flatNo: formData.flatNo.trim(),
         wing: formData.wing.trim(),
-        ...(!account?.hasPassword ? { password: formData.password } : {}),
+        type: formData.type,
       });
     } catch (saveError) {
       setError(getApiErrorMessage(saveError));

@@ -3,11 +3,12 @@ import { InputGroup, Label, TextField } from '@heroui/react';
 import GoogleLoginButton from './GoogleLoginButton';
 import AuthSubmitButton from './AuthSubmitButton';
 import useLoginForm from '../hooks/useLoginForm';
+import ErrorToast from '../../../components/ui/ErrorToast';
 
 const LoginForm = ({ onSwitchToSignup, onBack, selectedRole, onAuthenticated }) => {
   const {
     email, setEmail, password, setPassword, showPassword, setShowPassword,
-    isLoading, error, handleSubmit,
+    isLoading, error, dismissError, handleSubmit,
   } = useLoginForm(selectedRole, onAuthenticated);
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -74,11 +75,7 @@ const LoginForm = ({ onSwitchToSignup, onBack, selectedRole, onAuthenticated }) 
         </InputGroup>
       </TextField>
 
-      {error && (
-        <p role="alert" className="rounded-lg border border-[#75464a] bg-[#392629] px-3 py-2.5 text-sm text-[#f0b2b4]">
-          {error}
-        </p>
-      )}
+      {error && <ErrorToast message={error} onDismiss={dismissError} />}
 
       <AuthSubmitButton
         icon={LogIn}

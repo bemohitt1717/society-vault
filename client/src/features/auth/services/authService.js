@@ -12,11 +12,8 @@ import {
 } from '../../../services/api/authApi';
 import { auth, googleProvider } from '../../../firebase/firebase';
 
-export const registerUser = async (email, password, role = 'resident') => {
-  if (role !== 'resident') {
-    throw new Error('Administrator accounts can only be created by the system administrator.');
-  }
-  return registerResident({ email, password });
+export const registerUser = (registration) => {
+  return registerResident(registration);
 };
 
 export const loginUser = async (email, password, role) => {

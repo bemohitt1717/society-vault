@@ -11,12 +11,6 @@ export const list = asyncHandler(async (req, res) => {
   return sendData(res, result.items, 200, result.meta);
 });
 
-export const create = asyncHandler(async (req, res) => {
-  const resident = await residentService.createResident(req.validated.body);
-  await recordAuditEvent({ actor: req.user, action: 'created', entity: 'resident', entityId: resident.id, summary: resident.email, ipAddress: req.ip });
-  return sendData(res, resident, 201);
-});
-
 export const update = asyncHandler(async (req, res) => {
   const resident = await residentService.updateResident(req.validated.params.id, req.validated.body);
   await recordAuditEvent({ actor: req.user, action: 'updated', entity: 'resident', entityId: resident.id, summary: resident.email, ipAddress: req.ip });

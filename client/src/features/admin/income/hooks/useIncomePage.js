@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useOutletContext } from 'react-router-dom';
-import { createIncome, deleteIncome, getSettings, listIncome, updateIncome } from '../../../../services/api/adminApi';
+import { createIncome, deleteIncome, getSettings, listAllResidents, listIncome, updateIncome } from '../../../../services/api/adminApi';
 import { getApiErrorMessage } from '../../../../services/api/http';
 
 const initialFilters = {
@@ -25,6 +25,9 @@ const useIncomePage = () => {
   const [transactions, setTransactions] = useState([]);
   const [stats, setStats] = useState(emptyStats);
   const [categories, setCategories] = useState([]);
+  const [residents, setResidents] = useState([]);
+  const [residentsLoading, setResidentsLoading] = useState(true);
+  const [residentsError, setResidentsError] = useState('');
   const [filters, setFilters] = useState(initialFilters);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -36,6 +39,7 @@ const useIncomePage = () => {
   const [settingsError, setSettingsError] = useState('');
   const [actionError, setActionError] = useState('');
   const [reloadVersion, setReloadVersion] = useState(0);
+  const [residentsReloadVersion, setResidentsReloadVersion] = useState(0);
   const [settingsReloadVersion, setSettingsReloadVersion] = useState(0);
 
   const handleAddIncome = useCallback(() => {
@@ -138,6 +142,8 @@ const useIncomePage = () => {
         setTransactions((payload.items || []).map((item) => ({
           ...item,
           id: item.id || item._id,
+          residentId: item.residentId || item.resident?.id || item.resident?._id || '',
+          residentName: item.residentName || '',
           resident: item.residentName || (typeof item.resident === 'string' ? item.resident : item.resident?.profile?.name) || '',
         })));
         setStats({ ...emptyStats, ...(payload.stats || {}) });
@@ -170,6 +176,23 @@ const useIncomePage = () => {
   }, [settingsReloadVersion]);
 
   useEffect(() => {
+    let active = true;
+    listAllResidents()
+      .then((result) => {
+        if (active) setResidents(result);
+      })
+      .catch((error) => {
+        if (active) setResidentsError(getApiErrorMessage(error));
+      })
+      .finally(() => {
+        if (active) setResidentsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [residentsReloadVersion]);
+
+  useEffect(() => {
     if (!location.state?.openAddDialog) return;
     // The route navigation is the external event that requests this UI state.
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -191,6 +214,9 @@ const useIncomePage = () => {
     transactions,
     stats,
     categories,
+    residents,
+    residentsLoading,
+    residentsError,
     filters,
     setFilters: handleSetFilters,
     page,
@@ -203,7 +229,10 @@ const useIncomePage = () => {
     actionError,
     retry: () => {
       setSettingsError('');
+      setResidentsError('');
+      setResidentsLoading(true);
       setReloadVersion((version) => version + 1);
+      setResidentsReloadVersion((version) => version + 1);
       setSettingsReloadVersion((version) => version + 1);
     },
     setPage,

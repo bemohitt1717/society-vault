@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { googleLogin } from '../services/authService';
 import { getApiErrorMessage } from '../../../services/api/http';
+import ErrorToast from '../../../components/ui/ErrorToast';
 
 const GoogleLoginButton = ({ onAuthenticated, buttonLabel = 'Continue with Google' }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +36,7 @@ const GoogleLoginButton = ({ onAuthenticated, buttonLabel = 'Continue with Googl
         </svg>
         {isLoading ? 'Signing in...' : buttonLabel}
       </button>
-      {error && <p role="alert" className="mt-3 text-sm text-[#f0b2b4]">{error}</p>}
+      {error && <ErrorToast message={error} onDismiss={() => setError('')} />}
     </div>
   );
 };

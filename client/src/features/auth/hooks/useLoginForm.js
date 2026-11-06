@@ -32,6 +32,7 @@ const useLoginForm = (selectedRole, onAuthenticated) => {
     setShowPassword,
     isLoading,
     error,
+    dismissError: () => setError(''),
     handleSubmit,
   };
 };

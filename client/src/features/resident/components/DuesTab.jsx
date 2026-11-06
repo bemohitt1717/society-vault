@@ -124,7 +124,7 @@ const DuesTab = ({ dues, onPayNow, isSubmitting = false }) => {
           <section className="space-y-5 rounded-xl border border-[#303136] bg-[#1a1a1e] p-4 sm:p-5 lg:sticky lg:top-4">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-base font-semibold text-[#f4f4f5]">Complete payment</h2>
+                <h2 className="text-base font-semibold text-[#f4f4f5]">Send payment request</h2>
                 <p className="mt-1 text-sm text-[#aeb4bf]">{selectedDue.category}</p>
               </div>
               <button
@@ -143,6 +143,10 @@ const DuesTab = ({ dues, onPayNow, isSubmitting = false }) => {
                 ₹{selectedAmount.toLocaleString('en-IN')}
               </p>
             </div>
+
+            <p className="text-xs leading-5 text-[#b8bac2]">
+              This sends a request to the society admin; it does not transfer money in the app. Pay using your society’s agreed method, and the admin will update your dues after verifying receipt.
+            </p>
 
             <fieldset>
               <legend className="mb-2.5 text-sm font-medium text-[#e4e4e7]">

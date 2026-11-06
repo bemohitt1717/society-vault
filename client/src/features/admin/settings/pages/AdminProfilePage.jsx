@@ -1,5 +1,6 @@
 import { Save, UserRound } from 'lucide-react';
 import useAdminProfile from '../hooks/useAdminProfile';
+import LoadingState from '../../../../components/ui/LoadingState';
 
 const AdminProfilePage = () => {
   const { name, email, isLoading, isSaving, error, success, handleChange, handleSubmit } = useAdminProfile();
@@ -16,7 +17,7 @@ const AdminProfilePage = () => {
 
       <form onSubmit={handleSubmit} className="rounded-xl border border-[#303136] bg-[#1d1e22] p-5 sm:p-6">
         {isLoading ? (
-          <p className="text-sm text-[#b8bac2]">Loading profile...</p>
+          <LoadingState label="Loading profile..." className="min-h-24" />
         ) : (
           <>
             <label htmlFor="admin-profile-name" className="mb-2 block text-sm font-medium text-[#d9d9de]">

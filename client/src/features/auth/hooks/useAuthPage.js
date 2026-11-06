@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUser, logoutUser, saveResidentAccountProfile } from '../services/authService';
+import { getApiErrorMessage, hasAuthToken } from '../../../services/api/http';
 
 const headings = {
   roleSelection: 'Welcome to SocietyVault',
@@ -15,9 +16,11 @@ const useAuthPage = () => {
   const [activeView, setActiveView] = useState('roleSelection');
   const [selectedRole, setSelectedRole] = useState(null);
   const [activeUser, setActiveUser] = useState(null);
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [isCheckingSession, setIsCheckingSession] = useState(hasAuthToken);
   const [restoreError, setRestoreError] = useState('');
   useEffect(() => {
+    if (!hasAuthToken()) return undefined;
+
     let active = true;
     getCurrentUser()
       .then((user) => {
@@ -34,7 +37,7 @@ const useAuthPage = () => {
         }
       })
       .catch((sessionError) => {
-        if (active) setRestoreError(sessionError.message || 'Could not verify your session.');
+        if (active) setRestoreError(getApiErrorMessage(sessionError, 'Session restore'));
       })
       .finally(() => {
         if (active) setIsCheckingSession(false);
@@ -46,6 +49,7 @@ const useAuthPage = () => {
   }, [navigate]);
 
   const handleRoleSelection = (role) => {
+    setRestoreError('');
     setSelectedRole(role);
     setActiveView('login');
   };
@@ -55,7 +59,10 @@ const useAuthPage = () => {
     setSelectedRole(null);
   };
 
+  const dismissRestoreError = () => setRestoreError('');
+
   const handleAuthenticated = (user) => {
+    setRestoreError('');
     setActiveUser(user);
     if (user.role === 'resident') {
       if (user.profileComplete && user.profile) {
@@ -78,7 +85,7 @@ const useAuthPage = () => {
     if (!activeUser?.email) {
       throw new Error('Your session has expired. Sign in again to continue.');
     }
-    const user = await saveResidentAccountProfile(activeUser.email, { ...profile, type: 'Owner' });
+    const user = await saveResidentAccountProfile(activeUser.email, profile);
     setActiveUser(user);
     navigate('/resident', { replace: true });
   };
@@ -97,7 +104,7 @@ const useAuthPage = () => {
       case 'login':
         return `Sign in as ${selectedRole === 'admin' ? 'Administrator' : 'Resident'}`;
       case 'residentSignup':
-        return 'Create a sign-in, then complete your resident profile.';
+        return 'Start with email and password, or continue with Google. Add your details next.';
       case 'signup':
         return `Create ${selectedRole === 'admin' ? 'Administrator' : 'Resident'} account`;
       case 'residentDetails':
@@ -114,6 +121,7 @@ const useAuthPage = () => {
     activeUser,
     isCheckingSession,
     restoreError,
+    dismissRestoreError,
     heading: headings[activeView] || headings.roleSelection,
     subtitle: getSubtitle(),
     handleRoleSelection,

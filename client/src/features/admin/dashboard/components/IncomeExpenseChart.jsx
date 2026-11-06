@@ -8,10 +8,10 @@ const CustomTooltip = ({ active, payload }) => {
     <div className="bg-[#242629] border border-[#2e2f33] rounded-lg p-3 shadow-lg">
       <p className="text-sm text-[#94a1b2] mb-2">{payload[0].payload.month}</p>
       <div className="space-y-1">
-        <p className="text-sm text-[#91c7a9] font-medium">
+        <p className="text-sm text-[#48e0ad] font-medium">
           Income: ₹{Number(payload.find((item) => item.dataKey === 'income')?.value || 0).toLocaleString('en-IN')}
         </p>
-        <p className="text-sm text-[#d89295] font-medium">
+        <p className="text-sm text-[#ff7188] font-medium">
           Expenses: ₹{Number(payload.find((item) => item.dataKey === 'expenses')?.value || 0).toLocaleString('en-IN')}
         </p>
       </div>
@@ -49,8 +49,8 @@ const IncomeExpenseChart = ({ data }) => {
             wrapperStyle={{ color: '#b8bec8', fontSize: '13px' }}
             iconType="circle"
           />
-          <Bar dataKey="income" fill="#91c7a9" radius={[5, 5, 0, 0]} name="Income" maxBarSize={40} />
-          <Bar dataKey="expenses" fill="#d89295" radius={[5, 5, 0, 0]} name="Expenses" maxBarSize={40} />
+          <Bar dataKey="income" fill="#18c98b" radius={[5, 5, 0, 0]} name="Income" maxBarSize={40} />
+          <Bar dataKey="expenses" fill="#f65370" radius={[5, 5, 0, 0]} name="Expenses" maxBarSize={40} />
         </BarChart>
       </ResponsiveContainer> : (
         <p className="py-12 text-center text-sm text-[#94a1b2]">No income or expense records yet.</p>

@@ -2,6 +2,7 @@
 import { Wallet, TrendingUp, TrendingDown, Percent, Search, Filter, FileSpreadsheet } from 'lucide-react';
 import { exportActionButtonClass, exportActionIconClass, resetFilterButtonClass } from '../../../components/ui/actionButtonStyles';
 import useSocietyFinancesPage from '../hooks/useSocietyFinancesPage';
+import LoadingState from '../../../components/ui/LoadingState';
 
 const SocietyFinancesPage = () => {
   const { stats, transactions, filters, setFilters, isExporting, isLoading, error, reload, filteredTransactions, formatDate, handleResetFilters, handleExportExcel } = useSocietyFinancesPage();
@@ -10,9 +11,7 @@ const SocietyFinancesPage = () => {
   return (
     <div className="space-y-6">
       {isLoading && (
-        <p role="status" className="rounded-lg border border-[#45414f] bg-[#1a1a1e] px-4 py-3 text-sm text-[#d0d3d9]">
-          Loading society finances…
-        </p>
+        <LoadingState label="Loading society finances..." className="min-h-24" />
       )}
       {error && (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#8b4545] bg-[#2a1c1c] px-4 py-3 text-sm text-[#f1b3b3]">

@@ -4,6 +4,7 @@ import {
   adminFormFieldClass,
   adminPrimaryButtonClass,
 } from '../../../../components/ui/actionButtonStyles';
+import LoadingState from '../../../../components/ui/LoadingState';
 
 const SettingsPage = () => {
   const {
@@ -251,7 +252,7 @@ const SettingsPage = () => {
           ))}
         </nav>
         <div className="min-h-64 rounded-2xl border border-[#26262b] bg-[#1a1a1e] p-6 lg:col-span-9">
-          {isLoading ? <p className="text-sm text-[#94a1b2]">Loading settings...</p> : renderContent()}
+          {isLoading ? <LoadingState label="Loading settings..." className="min-h-40" /> : renderContent()}
         </div>
       </div>
     </div>

@@ -58,17 +58,6 @@ export const listResidents = async (query) => {
   };
 };
 
-export const createResident = async ({ email, profile }) => {
-  const user = await User.create({
-    email: email.trim().toLowerCase(),
-    role: 'resident',
-    status: profile.membershipStatus === 'Inactive' ? 'disabled' : 'invited',
-    profile,
-    profileComplete: true,
-  });
-  return User.findById(user.id).select(publicResidentFields);
-};
-
 export const updateResident = async (id, { email, profile }) => {
   const user = await User.findOne({ _id: id, role: 'resident' }).select('+passwordHash +firebaseUid');
   if (!user) throw new ApiError(404, 'Resident not found.');
@@ -150,7 +139,12 @@ export const listAllDues = async (query = {}) => {
 };
 
 export const createDue = async (data) => {
-  const resident = await User.findOne({ _id: data.resident, role: 'resident', status: 'active' }).select('_id');
+  const resident = await User.findOne({
+    _id: data.resident,
+    role: 'resident',
+    status: { $in: ['active', 'invited'] },
+    'profile.membershipStatus': 'Active',
+  }).select('_id');
   if (!resident) throw new ApiError(404, 'Active resident not found.');
   return MaintenanceDue.create(data);
 };

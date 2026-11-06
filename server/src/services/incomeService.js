@@ -42,6 +42,7 @@ export const listIncome = async (query) => {
   return {
     items: items.map((item) => ({
       ...item,
+      residentId: item.resident?._id || item.resident || null,
       residentName: item.resident?.profile?.name || item.residentName || '',
       resident: item.resident?.profile?.name || item.residentName || '',
       flat: item.flat || [item.resident?.profile?.wing, item.resident?.profile?.flatNo].filter(Boolean).join('-'),

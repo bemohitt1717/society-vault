@@ -2,6 +2,7 @@ import DuesTab from '../components/DuesTab';
 import PaymentHistoryTab from '../components/PaymentHistoryTab';
 import ReceiptsTab from '../components/ReceiptsTab';
 import useMyPaymentsPage from '../hooks/useMyPaymentsPage';
+import LoadingState from '../../../components/ui/LoadingState';
 
 const MyPaymentsPage = () => {
   const {
@@ -22,11 +23,6 @@ const MyPaymentsPage = () => {
 
   return (
     <div className="space-y-6">
-      {isLoading && (
-        <p role="status" className="rounded-lg border border-[#45414f] bg-[#1a1a1e] px-4 py-3 text-sm text-[#d0d3d9]">
-          Loading your payment information…
-        </p>
-      )}
       {error && (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#8b4545] bg-[#2a1c1c] px-4 py-3 text-sm text-[#f1b3b3]">
           <span>{error}</span>
@@ -80,7 +76,9 @@ const MyPaymentsPage = () => {
       <div>
         {isLoading || error ? (
           <div className="rounded-xl border border-[#303136] bg-[#1a1a1e] px-6 py-10 text-center text-sm text-[#aeb4bf]">
-            {isLoading ? 'Fetching account data…' : 'Payment data is unavailable until the request succeeds.'}
+            {isLoading
+              ? <LoadingState label="Loading your payment details..." className="min-h-16" />
+              : 'Payment data is unavailable until the request succeeds.'}
           </div>
         ) : (
           <>

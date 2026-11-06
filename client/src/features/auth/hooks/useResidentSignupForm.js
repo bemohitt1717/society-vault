@@ -3,7 +3,7 @@ import { registerUser } from '../services/authService';
 import { getApiErrorMessage } from '../../../services/api/http';
 
 const useResidentSignupForm = (onRegistered) => {
-  const [formData, setFormData] = useState({ email: '', password: '', confirmPassword: '' });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPasswords, setShowPasswords] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -16,15 +16,11 @@ const useResidentSignupForm = (onRegistered) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match. Check both fields and try again.');
-      return;
-    }
-
     setIsLoading(true);
     setError('');
     try {
-      const user = await registerUser(formData.email, formData.password, 'resident');
+      const { email, password } = formData;
+      const user = await registerUser({ email, password });
       onRegistered(user);
     } catch (registrationError) {
       setError(getApiErrorMessage(registrationError));

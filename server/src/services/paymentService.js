@@ -5,6 +5,7 @@ import User from '../models/User.js';
 import parsePagination from '../utils/parsePagination.js';
 import ApiError from '../utils/ApiError.js';
 import { randomUUID } from 'node:crypto';
+import mongoose from 'mongoose';
 
 const createReceiptNumber = () => `REC-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${randomUUID().slice(0, 8).toUpperCase()}`;
 
@@ -42,7 +43,7 @@ export const listResidentPayments = async (residentId, query = {}) => {
     Payment.find(filter).sort({ date: -1 }).skip(skip).limit(limit).lean(),
     Payment.countDocuments(filter),
     Payment.aggregate([
-      { $match: { ...filter, status: 'completed' } },
+      { $match: { ...filter, resident: new mongoose.Types.ObjectId(residentId), status: 'completed' } },
       { $group: { _id: null, totalPaid: { $sum: '$amount' }, completedCount: { $sum: 1 } } },
     ]),
   ]);
@@ -176,7 +177,7 @@ export const getResidentPaymentReport = async (residentId, query = {}) => {
   const [payments, totals] = await Promise.all([
     Payment.find(filter).sort({ date: -1 }).limit(500).lean(),
     Payment.aggregate([
-      { $match: { ...filter, status: 'completed' } },
+      { $match: { ...filter, resident: new mongoose.Types.ObjectId(residentId), status: 'completed' } },
       { $group: { _id: null, totalPaid: { $sum: '$amount' }, completedCount: { $sum: 1 } } },
     ]),
   ]);

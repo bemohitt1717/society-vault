@@ -38,7 +38,7 @@ const ExpenseDetailDrawer = ({ expense, isOpen, onClose, onEdit, onDelete, error
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 z-40 bg-black/70 transition-opacity"
+        className="fixed inset-0 z-40 cursor-pointer bg-black/70 transition-opacity"
         onClick={onClose}
       />
       

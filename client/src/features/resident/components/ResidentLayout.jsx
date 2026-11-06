@@ -26,7 +26,7 @@ const ResidentLayout = () => {
       {mobileSidebarOpen && (
         <>
           <div
-            className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+            className="fixed inset-0 cursor-pointer bg-black/50 z-30 lg:hidden"
             onClick={closeMobileSidebar}
           />
           <div className="fixed left-0 top-0 h-full z-40 lg:hidden">

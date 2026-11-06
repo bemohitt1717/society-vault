@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { listAllDues, listPayments, listResidents, createResident, updateResident, disableResident } from '../../../../services/api/adminApi';
+import {
+  createDue,
+  disableResident,
+  listAllDues,
+  listPayments,
+  listResidents,
+  recordManualPayment,
+  updatePaymentStatus,
+  updateResident,
+} from '../../../../services/api/adminApi';
 import { getApiErrorMessage } from '../../../../services/api/http';
 
 const tabs = [
@@ -43,9 +52,18 @@ const useResidentsPage = () => {
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [duesSummary, setDuesSummary] = useState(emptyDuesSummary);
   const [showForm, setShowForm] = useState(false);
+  const [showDueForm, setShowDueForm] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [editingResident, setEditingResident] = useState(null);
+  const [paymentReview, setPaymentReview] = useState(null);
+  const [paymentReviewError, setPaymentReviewError] = useState('');
   const [loadedTab, setLoadedTab] = useState('');
-  const [error, setError] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isActionSaving, setIsActionSaving] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   const loadResidents = useCallback(async () => loadAllPages(
     (page) => listResidents({ page, limit: 100 }),
@@ -80,7 +98,7 @@ const useResidentsPage = () => {
   }, []);
 
   const loadPayments = useCallback(async () => {
-    const payments = await loadAllPages((page) => listPayments({ page, limit: 100, status: 'completed' }));
+    const payments = await loadAllPages((page) => listPayments({ page, limit: 100 }));
     return payments.map((payment) => ({
       ...payment,
       id: payment.id || payment._id,
@@ -90,6 +108,11 @@ const useResidentsPage = () => {
       period: payment.month || payment.category,
       mode: payment.paymentMode,
       reference: payment.transactionId || payment.receiptNo || '',
+      statusLabel: payment.status === 'completed'
+        ? 'Completed'
+        : payment.status === 'pending'
+          ? 'Pending verification'
+          : payment.status.charAt(0).toUpperCase() + payment.status.slice(1),
     }));
   }, []);
 
@@ -106,18 +129,13 @@ const useResidentsPage = () => {
         } else setPaymentHistory(data);
       })
       .catch((requestError) => {
-        if (active) setError(getApiErrorMessage(requestError));
+        if (active) setLoadError(getApiErrorMessage(requestError));
       })
       .finally(() => {
         if (active) setLoadedTab(activeTab);
       });
     return () => { active = false; };
-  }, [activeTab, loadDues, loadPayments, loadResidents]);
-
-  const addResident = () => {
-    setEditingResident(null);
-    setShowForm(true);
-  };
+  }, [activeTab, loadAttempt, loadDues, loadPayments, loadResidents]);
 
   const editResident = (resident) => {
     setEditingResident(resident);
@@ -126,41 +144,159 @@ const useResidentsPage = () => {
 
   const deleteResident = async (residentId) => {
     if (!window.confirm('Are you sure you want to deactivate this resident?')) return;
-    setError('');
+    setActionError('');
     try {
       const updatedResident = await disableResident(residentId);
       setResidents((currentResidents) => currentResidents.map((resident) => (
-        resident.id === residentId ? updatedResident : resident
+        resident.id === residentId
+          ? {
+            ...resident,
+            ...updatedResident,
+            outstanding: updatedResident.outstanding ?? resident.outstanding ?? 0,
+            totalPaid: updatedResident.totalPaid ?? resident.totalPaid ?? 0,
+          }
+          : resident
       )));
     } catch (requestError) {
-      setError(getApiErrorMessage(requestError));
+      setActionError(getApiErrorMessage(requestError));
+    }
+  };
+
+  const ensureResidentsLoaded = async () => {
+    if (residents.length) return residents;
+    const result = await loadResidents();
+    setResidents(result);
+    return result;
+  };
+
+  const openDueForm = async () => {
+    setActionError('');
+    try {
+      await ensureResidentsLoaded();
+      setShowDueForm(true);
+    } catch (requestError) {
+      setActionError(getApiErrorMessage(requestError));
+    }
+  };
+
+  const openPaymentForm = async () => {
+    setActionError('');
+    try {
+      await ensureResidentsLoaded();
+      setShowPaymentForm(true);
+    } catch (requestError) {
+      setActionError(getApiErrorMessage(requestError));
+    }
+  };
+
+  const closeDueForm = () => {
+    if (!isActionSaving) setShowDueForm(false);
+  };
+
+  const closePaymentForm = () => {
+    if (!isActionSaving) setShowPaymentForm(false);
+  };
+
+  const saveDue = async (dueData) => {
+    if (isActionSaving) return;
+    setActionError('');
+    setIsActionSaving(true);
+    try {
+      await createDue(dueData);
+      setShowDueForm(false);
+      setLoadedTab('');
+      setLoadAttempt((attempt) => attempt + 1);
+    } catch (requestError) {
+      setActionError(getApiErrorMessage(requestError));
+    } finally {
+      setIsActionSaving(false);
+    }
+  };
+
+  const savePayment = async (paymentData) => {
+    if (isActionSaving) return;
+    setActionError('');
+    setIsActionSaving(true);
+    try {
+      await recordManualPayment(paymentData);
+      setShowPaymentForm(false);
+      setLoadedTab('');
+      setLoadAttempt((attempt) => attempt + 1);
+    } catch (requestError) {
+      setActionError(getApiErrorMessage(requestError));
+    } finally {
+      setIsActionSaving(false);
+    }
+  };
+
+  const requestPaymentReview = (payment, status) => {
+    setPaymentReviewError('');
+    setPaymentReview({ payment, status });
+  };
+
+  const cancelPaymentReview = () => {
+    if (!isActionSaving) {
+      setPaymentReview(null);
+      setPaymentReviewError('');
+    }
+  };
+
+  const confirmPaymentReview = async () => {
+    if (!paymentReview || isActionSaving) return;
+    setPaymentReviewError('');
+    setIsActionSaving(true);
+    try {
+      await updatePaymentStatus(paymentReview.payment.id, paymentReview.status);
+      setPaymentReview(null);
+      setLoadedTab('');
+      setLoadAttempt((attempt) => attempt + 1);
+    } catch (requestError) {
+      setPaymentReviewError(getApiErrorMessage(requestError));
+    } finally {
+      setIsActionSaving(false);
     }
   };
 
   const closeForm = () => {
+    if (isSaving) return;
     setShowForm(false);
     setEditingResident(null);
+    setSaveError('');
   };
 
   const saveResident = async (residentData) => {
-    setError('');
+    if (isSaving) return;
+    setSaveError('');
+    setIsSaving(true);
     try {
-      const resident = editingResident
-        ? await updateResident(editingResident.id, residentData)
-        : await createResident(residentData);
-      setResidents((currentResidents) => editingResident
-        ? currentResidents.map((item) => item.id === resident.id ? resident : item)
-        : [resident, ...currentResidents]);
+      const resident = await updateResident(editingResident.id, residentData);
+      setResidents((currentResidents) => currentResidents.map((item) => item.id === resident.id
+        ? {
+          ...item,
+          ...resident,
+          outstanding: resident.outstanding ?? item.outstanding ?? 0,
+          totalPaid: resident.totalPaid ?? item.totalPaid ?? 0,
+        }
+        : item));
       closeForm();
     } catch (requestError) {
-      setError(getApiErrorMessage(requestError));
+      setSaveError(getApiErrorMessage(requestError));
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const retryLoad = () => {
+    setLoadError('');
+    setLoadedTab('');
+    setLoadAttempt((attempt) => attempt + 1);
   };
 
   return {
     activeTab,
     setActiveTab: (tab) => {
-      setError('');
+      setLoadError('');
+      setActionError('');
       setActiveTab(tab);
     },
     residents,
@@ -169,14 +305,31 @@ const useResidentsPage = () => {
     duesSummary,
     tabs,
     showForm,
+    showDueForm,
+    showPaymentForm,
     editingResident,
+    paymentReview,
+    paymentReviewError,
     isLoading: loadedTab !== activeTab,
-    error,
-    addResident,
+    loadError,
+    actionError,
+    saveError,
+    isSaving,
+    isActionSaving,
     editResident,
     deleteResident,
     closeForm,
     saveResident,
+    retryLoad,
+    openDueForm,
+    openPaymentForm,
+    closeDueForm,
+    closePaymentForm,
+    saveDue,
+    savePayment,
+    requestPaymentReview,
+    confirmPaymentReview,
+    cancelPaymentReview,
     getStatusColor,
   };
 };

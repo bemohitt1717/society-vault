@@ -5,6 +5,7 @@ const ConfirmDialog = ({
   title,
   description,
   confirmLabel = 'Confirm',
+  confirmVariant = 'danger',
   cancelLabel = 'Cancel',
   error = '',
   isLoading = false,
@@ -55,7 +56,11 @@ const ConfirmDialog = ({
             type="button"
             disabled={isLoading}
             onClick={onConfirm}
-            className="min-h-10 cursor-pointer rounded-lg bg-[#8d4c50] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#a4575c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e3a2a4] disabled:cursor-wait disabled:opacity-60"
+            className={`min-h-10 cursor-pointer rounded-lg px-4 text-sm font-semibold text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-wait disabled:opacity-60 ${
+              confirmVariant === 'success'
+                ? 'bg-[#278b68] hover:bg-[#2b9b74] focus-visible:outline-[#79d2ae]'
+                : 'bg-[#8d4c50] hover:bg-[#a4575c] focus-visible:outline-[#e3a2a4]'
+            }`}
           >
             {isLoading ? 'Please wait...' : confirmLabel}
           </button>
