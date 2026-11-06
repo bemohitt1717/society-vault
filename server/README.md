@@ -14,7 +14,7 @@ Single-society REST API built with Express, MongoDB/Mongoose, and Firebase Admin
 
 The admin seed command refuses to overwrite an existing administrator. Admin accounts cannot be created through public registration.
 Use `npm run reset:admin-password` after changing `ADMIN_PASSWORD` in the local `.env` to rotate an existing admin password.
-For UI testing, first create an admin and start the API, then run `npm run seed:sample-data -- --confirm` from `server`. This opt-in command is disabled in production and idempotently adds/refreshes five resident test accounts, five months of paid receipts per resident, current outstanding dues, six months of income/expenses, categories, demo financial settings, and one maintenance schedule. It does not remove unrelated records. Sample income is sized so each month's income covers its expenses. The test accounts use these credentials:
+For local UI testing, first create an admin and start the API, then run `npm run seed:sample-data -- --confirm` from `server`. In production, the same idempotent seed can be used for a public project demo only: point the API at a separate MongoDB database named `societyvault_demo`, ensure an admin exists in that database, then run `npm run seed:sample-data -- --confirm --allow-production-demo` from the API shell. The production command refuses to write to any database whose name is not exactly `societyvault_demo`. It adds/refreshes five resident test accounts, five months of paid receipts per resident, current outstanding dues, six months of income/expenses, categories, demo financial settings, and one maintenance schedule; it does not remove unrelated records. Sample income is sized so each month's income covers its expenses. The test accounts use these credentials:
 
 | Name | Email | Password |
 |---|---|---|
@@ -24,7 +24,7 @@ For UI testing, first create an admin and start the API, then run `npm run seed:
 | Ishuu | `ishuu@gmail.com` | `ishuu123` |
 | Dhansikha | `dhansikha@gmail.com` | `dhansikha123` |
 
-These are weak test credentials for a disposable development database only. Never use them for real accounts or production.
+These are public, weak demo credentials. Use them only in the isolated `societyvault_demo` database, never in a real society's database or for accounts containing real information. Public users may change demo data.
 
 ## Deployment configuration
 
@@ -34,6 +34,7 @@ These are weak test credentials for a disposable development database only. Neve
 - If Google sign-in returns 401 after the Google popup completes, check the `/auth/google` response body and Render logs. The authorized-domain setting allows the browser popup; it does not configure the API to verify Firebase ID tokens. Confirm the Vercel client project ID, Render `FIREBASE_PROJECT_ID`, and service-account `project_id` all match.
 - Never set `CLIENT_ORIGINS` to `*`; credentialed CORS requires explicit origins. Add each origin as `https://domain` only, with no route or trailing path.
 - Keep staging and production databases separate. Restrict MongoDB Network Access to the deployment's static outbound IPs where available; avoid leaving `0.0.0.0/0` enabled in production.
+- For the public project demo, configure the deployed API to use the dedicated `societyvault_demo` database. Do not point the sample-data seed at a real society's production database.
 
 ## API groups
 

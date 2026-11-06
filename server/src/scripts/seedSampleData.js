@@ -22,6 +22,7 @@ const residents = [
 const incomeCategories = ['Maintenance Charges', 'Other Income'];
 const expenseCategories = ['Security Services', 'Housekeeping', 'Common Area Electricity'];
 const paymentModes = ['UPI', 'Bank Transfer', 'Cash', 'Card', 'Cheque'];
+const productionDemoDatabaseName = 'societyvault_demo';
 
 const monthLabel = (date) => date.toLocaleString('en-IN', {
   month: 'long',
@@ -77,14 +78,18 @@ const getOrCreateResident = async (profile, passwordHash) => {
 };
 
 const seedSampleData = async () => {
-  if (env.NODE_ENV === 'production') {
-    throw new Error('Sample data is disabled when NODE_ENV=production.');
-  }
   if (!process.argv.includes('--confirm')) {
     throw new Error('To add local sample data, run: npm run seed:sample-data -- --confirm');
   }
+  if (env.NODE_ENV === 'production' && !process.argv.includes('--allow-production-demo')) {
+    throw new Error('Production demo seeding requires --allow-production-demo and the dedicated societyvault_demo database.');
+  }
 
   await connectDatabase();
+
+  if (env.NODE_ENV === 'production' && mongoose.connection.name !== productionDemoDatabaseName) {
+    throw new Error(`Production demo data may only be seeded into "${productionDemoDatabaseName}". Connected to "${mongoose.connection.name}"; no sample data was changed.`);
+  }
 
   const admin = await User.findOne({ role: 'admin', status: 'active' }).select('_id');
   if (!admin) {

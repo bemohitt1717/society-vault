@@ -156,7 +156,13 @@ cd server
 npm run seed:sample-data -- --confirm
 ```
 
-This command is disabled in production and does not remove unrelated records. The sample passwords are intentionally simple and are for local testing only. See [`server/README.md`](./server/README.md) for the sample-account list and additional API/deployment notes. **Never use the sample accounts or passwords in production.**
+For the deployed public project demo, use a separate MongoDB database named `societyvault_demo` (never a real society's database). Once the deployed API is configured to use that demo database and an admin exists in it, run this one-time command from the API shell:
+
+```bash
+npm run seed:sample-data -- --confirm --allow-production-demo
+```
+
+In `NODE_ENV=production`, the seed requires the explicit `--allow-production-demo` flag and refuses to write unless the connected database name is exactly `societyvault_demo`. It is idempotent and does not remove unrelated records. The sample passwords are public, weak demo credentials; only use them with the isolated public-demo database, never for a real society or any account with real data. See [`server/README.md`](./server/README.md) for the sample-account list and deployment notes.
 
 ## Useful commands
 
@@ -173,6 +179,7 @@ Run these from their respective folders:
 | `server` | `npm run seed:admin` | Create the initial admin account |
 | `server` | `npm run reset:admin-password` | Reset an existing admin password |
 | `server` | `npm run seed:sample-data -- --confirm` | Add or refresh local demo data |
+| `server` | `npm run seed:sample-data -- --confirm --allow-production-demo` | Seed the isolated `societyvault_demo` database in production |
 
 ## Security and project scope
 
